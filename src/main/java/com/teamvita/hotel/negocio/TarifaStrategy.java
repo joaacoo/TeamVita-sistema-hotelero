@@ -1,3 +1,5 @@
 package com.teamvita.hotel.negocio;
 
-public interface TarifaStrategy {}
+public interface TarifaStrategy {
+    double calcularTarifa(double precioBase);
+}
