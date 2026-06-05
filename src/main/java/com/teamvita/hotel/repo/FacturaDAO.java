@@ -13,7 +13,7 @@ public class FacturaDAO {
         String sql = "INSERT INTO facturas (total, fecha) VALUES (?, ?)";
         try (Connection conn = ConexionBD.getInstancia().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            // TODO: Setear parámetros del statement
+            // TODO: Setear parï¿½metros del statement
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

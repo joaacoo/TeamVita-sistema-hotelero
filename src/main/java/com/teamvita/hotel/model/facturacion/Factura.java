@@ -1,14 +1,18 @@
 package com.teamvita.hotel.model.facturacion;
 
-import com.teamvita.hotel.model.*;
-import com.teamvita.hotel.model.habitacion.*;
-import com.teamvita.hotel.model.reserva.*;
-import com.teamvita.hotel.model.servicio.*;
-import com.teamvita.hotel.model.fidelizacion.*;
-import com.teamvita.hotel.model.facturacion.*;
-
 public class Factura {
     private double total;
 
-    public void generarFactura() {}
+    public Factura(double total) {
+        this.total = total;
+    }
+
+    public double getTotal() {
+        return total;
+    }
+
+    public void generarFactura() {
+        System.out.println("FACTURA GENERADA");
+        System.out.println("Total a pagar: $" + total);
+    }
 }

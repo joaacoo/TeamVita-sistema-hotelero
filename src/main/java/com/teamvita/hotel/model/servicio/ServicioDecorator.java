@@ -1,16 +1,25 @@
 package com.teamvita.hotel.model.servicio;
 
-import com.teamvita.hotel.model.*;
-import com.teamvita.hotel.model.habitacion.*;
-import com.teamvita.hotel.model.reserva.*;
-import com.teamvita.hotel.model.servicio.*;
-import com.teamvita.hotel.model.fidelizacion.*;
-import com.teamvita.hotel.model.facturacion.*;
-
 public abstract class ServicioDecorator implements Servicio {
-    protected Servicio servicio;
+    protected Servicio servicioBase;
 
-    public ServicioDecorator(Servicio servicio) {
-        this.servicio = servicio;
+    public ServicioDecorator(Servicio servicioBase) {
+        this.servicioBase = servicioBase;
+    }
+    
+    @Override
+    public double calcularCosto() {
+        if (servicioBase != null) {
+            return servicioBase.calcularCosto();
+        }
+        return 0;
+    }
+    
+    @Override
+    public String getDescripcion() {
+        if (servicioBase != null) {
+            return servicioBase.getDescripcion();
+        }
+        return "";
     }
 }

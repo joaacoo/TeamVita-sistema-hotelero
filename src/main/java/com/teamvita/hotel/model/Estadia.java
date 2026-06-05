@@ -1,23 +1,60 @@
 package com.teamvita.hotel.model;
 
-import com.teamvita.hotel.model.habitacion.*;
-import com.teamvita.hotel.model.reserva.*;
-import com.teamvita.hotel.model.servicio.*;
-import com.teamvita.hotel.model.fidelizacion.*;
-import com.teamvita.hotel.model.facturacion.*;
-
-import java.util.Date;
+import com.teamvita.hotel.model.reserva.Reserva;
+import com.teamvita.hotel.model.servicio.Servicio;
+import com.teamvita.hotel.model.facturacion.Factura;
+import com.teamvita.hotel.model.reserva.DetalleReserva;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Estadia {
-    private Date fechaCheckIn;
-    private Date fechaCheckOut;
+    private LocalDate fechaCheckIn;
+    private LocalDate fechaCheckOut;
     private double costoTotal;
     private Reserva reserva;
     private List<Servicio> serviciosAdicionales;
     private Factura factura;
 
-    public double calcularCostoTotal() {
-        return 0; // TODO: Implementar
+    public Estadia(Reserva reserva, LocalDate fechaCheckIn) {
+        this.reserva = reserva;
+        this.fechaCheckIn = fechaCheckIn;
+        this.serviciosAdicionales = new ArrayList<>();
     }
+
+    public void agregarServicio(Servicio servicio) {
+        this.serviciosAdicionales.add(servicio);
+    }
+
+    public double calcularCostoTotal() {
+        double subtotal = 0;
+        
+        // Sumar costo de habitaciones por noche
+        for (DetalleReserva detalle : reserva.getDetalles()) {
+            double precioPorNoche = detalle.getHabitacion().obtenerPrecio();
+            int noches = detalle.calcularNoches();
+            subtotal += (precioPorNoche * noches);
+        }
+        
+        // Sumar servicios adicionales (Decorator)
+        for (Servicio servicio : serviciosAdicionales) {
+            subtotal += servicio.calcularCosto();
+        }
+        
+        // Aplicar descuento de fidelizacion (Strategy)
+        double descuento = reserva.getHuesped().getCategoria().calcularDescuento(subtotal);
+        
+        this.costoTotal = subtotal - descuento;
+        return this.costoTotal;
+    }
+
+    public void registrarCheckOut(LocalDate fechaCheckOut) {
+        this.fechaCheckOut = fechaCheckOut;
+        this.factura = new Factura(calcularCostoTotal());
+    }
+
+    public Factura getFactura() { return factura; }
+    public LocalDate getFechaCheckIn() { return fechaCheckIn; }
+    public LocalDate getFechaCheckOut() { return fechaCheckOut; }
+    public double getCostoTotal() { return costoTotal; }
 }
