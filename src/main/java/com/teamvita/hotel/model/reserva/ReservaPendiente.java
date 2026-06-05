@@ -1,13 +1,15 @@
 package com.teamvita.hotel.model.reserva;
 
-import com.teamvita.hotel.model.*;
-import com.teamvita.hotel.model.habitacion.*;
-import com.teamvita.hotel.model.reserva.*;
-import com.teamvita.hotel.model.servicio.*;
-import com.teamvita.hotel.model.fidelizacion.*;
-import com.teamvita.hotel.model.facturacion.*;
-
 public class ReservaPendiente implements EstadoReserva {
     @Override
-    public void cambiarEstado(Reserva reserva) {}
+    public void cambiarEstado(Reserva reserva, EstadoReserva nuevoEstado) {
+        if (nuevoEstado instanceof ReservaConfirmada || nuevoEstado instanceof ReservaCancelada) {
+            reserva.cambiarEstado(nuevoEstado);
+        } else {
+            throw new IllegalStateException("Transición inválida desde Pendiente a " + nuevoEstado.getNombreEstado());
+        }
+    }
+    
+    @Override
+    public String getNombreEstado() { return "PENDIENTE"; }
 }

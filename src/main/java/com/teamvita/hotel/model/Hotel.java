@@ -1,11 +1,8 @@
 package com.teamvita.hotel.model;
 
-import com.teamvita.hotel.model.habitacion.*;
-import com.teamvita.hotel.model.reserva.*;
-import com.teamvita.hotel.model.servicio.*;
-import com.teamvita.hotel.model.fidelizacion.*;
-import com.teamvita.hotel.model.facturacion.*;
-
+import com.teamvita.hotel.model.habitacion.Habitacion;
+import com.teamvita.hotel.model.reserva.Reserva;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Hotel {
@@ -13,4 +10,16 @@ public class Hotel {
     private String direccion;
     private List<Habitacion> habitaciones;
     private List<Reserva> reservas;
+
+    public Hotel(String nombre, String direccion) {
+        this.nombre = nombre;
+        this.direccion = direccion;
+        this.habitaciones = new ArrayList<>();
+        this.reservas = new ArrayList<>();
+    }
+
+    public String getNombre() { return nombre; }
+    public String getDireccion() { return direccion; }
+    public List<Habitacion> getHabitaciones() { return habitaciones; }
+    public List<Reserva> getReservas() { return reservas; }
 }
