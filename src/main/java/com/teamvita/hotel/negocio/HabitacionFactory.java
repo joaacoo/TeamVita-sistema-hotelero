@@ -1,12 +1,18 @@
 package com.teamvita.hotel.negocio;
-import com.teamvita.hotel.model.*;
+
 import com.teamvita.hotel.model.habitacion.*;
-import com.teamvita.hotel.model.reserva.*;
-import com.teamvita.hotel.model.servicio.*;
-import com.teamvita.hotel.model.fidelizacion.*;
-import com.teamvita.hotel.model.facturacion.*;
-import java.util.List;
 
 public class HabitacionFactory {
-    public Habitacion crearHabitacion(String tipo) { return null; }
+    public Habitacion crearHabitacion(String tipo, int numero) {
+        switch (tipo.toLowerCase()) {
+            case "simple":
+                return new HabitacionSimple(numero);
+            case "doble":
+                return new HabitacionDoble(numero);
+            case "suite":
+                return new Suite(numero);
+            default:
+                throw new IllegalArgumentException("Tipo de habitacion desconocido: " + tipo);
+        }
+    }
 }
