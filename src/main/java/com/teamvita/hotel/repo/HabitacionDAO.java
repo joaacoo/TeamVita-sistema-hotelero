@@ -1,27 +1,20 @@
 package com.teamvita.hotel.repo;
-import com.teamvita.hotel.model.*;
-import com.teamvita.hotel.model.habitacion.*;
-import com.teamvita.hotel.model.reserva.*;
-import com.teamvita.hotel.model.servicio.*;
-import com.teamvita.hotel.model.fidelizacion.*;
-import com.teamvita.hotel.model.facturacion.*;
-import java.util.List;
-import java.sql.*;
+
+import com.teamvita.hotel.model.habitacion.Habitacion;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 public class HabitacionDAO {
-    public void marcarNoDisponible(Habitacion habitacion) {
-        String sql = "UPDATE habitaciones SET disponible = false WHERE numero = ?";
-        try (Connection conn = ConexionBD.getInstancia().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            // TODO: Setear parámetros del statement
-            stmt.executeUpdate();
-        } catch (SQLException e) {
+    public void update(Habitacion habitacion) {
+        String sql = "UPDATE habitacion SET disponible = ? WHERE numero = ?";
+        try {
+            Connection con = ConexionBD.getInstancia().getConexion();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setBoolean(1, habitacion.isDisponible());
+            ps.setInt(2, habitacion.getNumero());
+            ps.executeUpdate();
+        } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public boolean verificarDisponibilidad(List<Habitacion> habitaciones, Object fechas) {
-        // TODO: Lógica de verificación con base de datos
-        return true; 
     }
 }
