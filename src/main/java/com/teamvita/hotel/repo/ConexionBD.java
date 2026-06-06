@@ -8,27 +8,29 @@ public class ConexionBD {
     private static ConexionBD instancia;
     private Connection conexion;
 
-    // Register MySQL driver when the class is loaded
+    // Registrar el driver MySQL cuando se carga la clase
     static {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            System.out.println("✅ MySQL JDBC driver loaded successfully");
+            System.out.println("Driver JDBC MySQL cargado correctamente");
         } catch (ClassNotFoundException e) {
-            System.err.println("❌ MySQL JDBC driver not found. Ensure mysql-connector.jar is on the classpath.");
+            System.err.println(
+                    "Driver JDBC MySQL no encontrado. Asegúrese de que mysql-connector.jar esté en el classpath.");
             e.printStackTrace();
         }
     }
 
     private ConexionBD() {
         try {
-            // Adjust URL if you use a custom port or timezone
+            // Ajustar URL si usa un puerto o zona horaria personalizada
             String url = "jdbc:mysql://localhost:3306/hotel_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-            String usuario = "root"; // Change if you created another MySQL user
-            String password = "";   // XAMPP default is empty; set your password if you changed it
+            String usuario = "root"; // Cambiar si creó otro usuario MySQL
+            String password = ""; // Por defecto en XAMPP está vacío; establezca la contraseña si la cambió
             this.conexion = DriverManager.getConnection(url, usuario, password);
-            System.out.println("✅ Connected to MySQL database 'hotel_db'");
+            System.out.println("Conectado a la base de datos MySQL 'hotel_db'");
         } catch (SQLException e) {
-            System.err.println("❌ Error connecting to MySQL. Check that MySQL is running and credentials are correct.");
+            System.err.println(
+                    "Error al conectar a MySQL. Verifique que MySQL se esté ejecutando y las credenciales sean correctas.");
             e.printStackTrace();
         }
     }
@@ -41,8 +43,20 @@ public class ConexionBD {
     }
 
     public Connection getConexion() {
+        try {
+            // Si la conexión es nula o está cerrada, reconectar
+            if (conexion == null || conexion.isClosed()) {
+                System.out.println("Conexión cerrada o nula. Reconectando...");
+                String url = "jdbc:mysql://localhost:3306/hotel_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+                String usuario = "root";
+                String password = "";
+                conexion = DriverManager.getConnection(url, usuario, password);
+                System.out.println("Reconexión exitosa a MySQL.");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al reconectar: " + e.getMessage());
+            e.printStackTrace();
+        }
         return conexion;
     }
 }
-
-

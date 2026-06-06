@@ -14,67 +14,67 @@ public class PanelAdministrador extends JPanel {
         JLabel titulo = new JLabel("Dashboard de Administración", SwingConstants.LEFT);
         titulo.setFont(new Font("Arial", Font.BOLD, 26));
         headerPanel.add(titulo, BorderLayout.WEST);
-        
-        JPanel btnHeaderPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton btnTarifas = new JButton("Configurar Tarifas");
-        JButton btnSenia = new JButton("Configurar Seña");
-        btnHeaderPanel.add(btnTarifas);
-        btnHeaderPanel.add(btnSenia);
-        headerPanel.add(btnHeaderPanel, BorderLayout.EAST);
-        
-        btnSenia.addActionListener(e -> {
-            try {
-                java.sql.Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
-                String actual = "30";
-                
-                // Fetch current from DB
-                java.sql.ResultSet rs = con.createStatement().executeQuery("SELECT valor FROM configuracion WHERE clave = 'senia_porcentaje'");
-                if (rs.next()) {
-                    actual = rs.getString(1);
-                }
-                
-                String nuevo = JOptionPane.showInputDialog(this, "Ingrese el porcentaje de seña requerido para reservas (ej: 30):", actual);
-                
-                if (nuevo != null && !nuevo.trim().isEmpty()) {
-                    // Update in DB
-                    java.sql.PreparedStatement ps = con.prepareStatement("UPDATE configuracion SET valor = ? WHERE clave = 'senia_porcentaje'");
-                    ps.setString(1, nuevo.trim());
-                    int updated = ps.executeUpdate();
-                    
-                    if (updated == 0) {
-                        // If it didn't exist for some reason, insert it
-                        java.sql.PreparedStatement psInsert = con.prepareStatement("INSERT INTO configuracion (clave, valor) VALUES ('senia_porcentaje', ?)");
-                        psInsert.setString(1, nuevo.trim());
-                        psInsert.executeUpdate();
-                    }
-                    
-                    JOptionPane.showMessageDialog(this, "Porcentaje de seña actualizado a " + nuevo.trim() + "% en la Base de Datos.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error al guardar configuración en BD: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-        
         add(headerPanel, BorderLayout.NORTH);
 
-        // Center - Stats and Table
+        // Center - Stats and Tabs
         JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
+        
+        // Fetch real stats (sin try-with-resources sobre la conexion)
+        String ocupacion = "0%";
+        String libres = "0";
+        String ingresos = "$ 0";
+        try {
+            java.sql.Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
+            
+            java.sql.PreparedStatement psHab = con.prepareStatement(
+                "SELECT COUNT(*), SUM(CASE WHEN disponible=1 THEN 1 ELSE 0 END) FROM habitacion");
+            java.sql.ResultSet rsHab = psHab.executeQuery();
+            if(rsHab.next()) {
+                int totalHab = rsHab.getInt(1);
+                int libresHab = rsHab.getInt(2);
+                libres = String.valueOf(libresHab);
+                if(totalHab > 0) {
+                    int ocupadas = totalHab - libresHab;
+                    ocupacion = (ocupadas * 100 / totalHab) + "%";
+                }
+            }
+            rsHab.close(); psHab.close();
+            
+            java.sql.PreparedStatement psIng = con.prepareStatement("SELECT SUM(monto) FROM pagos");
+            java.sql.ResultSet rsIngresos = psIng.executeQuery();
+            if(rsIngresos.next()) {
+                double total = rsIngresos.getDouble(1);
+                ingresos = String.format("$ %.2f", total);
+            }
+            rsIngresos.close(); psIng.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         
         // Stats boxes
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 10, 0));
-        statsPanel.add(createStatBox("Ocupación Actual", "75%"));
-        statsPanel.add(createStatBox("Habitaciones Libres", "12"));
-        statsPanel.add(createStatBox("Ingresos Mensuales", "$ 15,400"));
+        statsPanel.add(createStatBox("Ocupación Actual", ocupacion));
+        statsPanel.add(createStatBox("Habitaciones Libres", libres));
+        statsPanel.add(createStatBox("Ingresos Totales", ingresos));
         centerPanel.add(statsPanel, BorderLayout.NORTH);
         
-        // El administrador ahora solo gestiona habitaciones, promociones y reportes (no ve reservas)
-        JPanel spacer = new JPanel();
-        centerPanel.add(spacer, BorderLayout.CENTER);
+        // JTabbedPane para Habitaciones, Servicios y Promociones
+        PanelServicios panelServicios = new PanelServicios();
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Habitaciones y Tarifas", new PanelGestionHabitaciones());
+        tabbedPane.addTab("Servicios Extra y Config.", panelServicios);
+        tabbedPane.addTab("Promociones", new PanelPromociones());
+        
+        // Recargar servicios al cambiar a esa pestaña
+        tabbedPane.addChangeListener(e -> {
+            if (tabbedPane.getSelectedIndex() == 1) {
+                panelServicios.recargar();
+            }
+        });
+        
+        centerPanel.add(tabbedPane, BorderLayout.CENTER);
         
         add(centerPanel, BorderLayout.CENTER);
-        
-        // Action Listeners
-        btnTarifas.addActionListener(e -> JOptionPane.showMessageDialog(this, "Módulo de configuración de tarifas en desarrollo.", "Configuración", JOptionPane.WARNING_MESSAGE));
     }
     
     private JPanel createStatBox(String title, String value) {

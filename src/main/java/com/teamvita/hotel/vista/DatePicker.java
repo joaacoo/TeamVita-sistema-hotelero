@@ -41,7 +41,14 @@ public class DatePicker {
         
         JPanel p2 = new JPanel(new GridLayout(1, 3));
         JButton previous = new JButton("<<");
-        previous.addActionListener(e -> { month--; if (month == 0) { month = 12; year--; } displayDate(); });
+        previous.addActionListener(e -> { 
+            int newMonth = month - 1;
+            int newYear = year;
+            if (newMonth == 0) { newMonth = 12; newYear--; } 
+            if(newYear > 2026 || (newYear == 2026 && newMonth >= 6)) {
+                month = newMonth; year = newYear; displayDate(); 
+            }
+        });
         p2.add(previous);
         p2.add(l);
         JButton next = new JButton(">>");
@@ -60,8 +67,18 @@ public class DatePicker {
         cal.set(year, month - 1, 1);
         int dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK);
         int daysInMonth = cal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH);
+        LocalDate limitDate = LocalDate.of(2026, 6, 1);
         for (int i = 0; i < daysInMonth; i++) {
-            button[i + dayOfWeek - 1].setText(String.valueOf(i + 1));
+            LocalDate cellDate = LocalDate.of(year, month, i + 1);
+            int btnIndex = i + dayOfWeek - 1;
+            button[btnIndex].setText(String.valueOf(i + 1));
+            if(cellDate.isBefore(limitDate)) {
+                button[btnIndex].setEnabled(false);
+                button[btnIndex].setForeground(Color.LIGHT_GRAY);
+            } else {
+                button[btnIndex].setEnabled(true);
+                button[btnIndex].setForeground(Color.BLACK);
+            }
         }
         l.setText(month + " / " + year);
     }

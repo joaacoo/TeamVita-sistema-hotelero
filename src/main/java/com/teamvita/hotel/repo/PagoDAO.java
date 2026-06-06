@@ -1,22 +1,25 @@
 package com.teamvita.hotel.repo;
-import com.teamvita.hotel.model.*;
-import com.teamvita.hotel.model.habitacion.*;
-import com.teamvita.hotel.model.reserva.*;
-import com.teamvita.hotel.model.servicio.*;
-import com.teamvita.hotel.model.fidelizacion.*;
-import com.teamvita.hotel.model.facturacion.*;
-import java.util.List;
 import java.sql.*;
 
 public class PagoDAO {
-    public void registrarPago(Pago pago) {
-        String sql = "INSERT INTO pagos (monto, fecha) VALUES (?, ?)";
-        try (Connection conn = ConexionBD.getInstancia().getConexion();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            // TODO: Setear par�metros del statement
+    // Versión con medio_pago (nueva)
+    public void registrarPago(int idReserva, double monto, String medioPago) {
+        String sql = "INSERT INTO pagos (id_reserva, monto, medio_pago, fecha) VALUES (?, ?, ?, CURDATE())";
+        try {
+            Connection conn = ConexionBD.getInstancia().getConexion();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, idReserva);
+            stmt.setDouble(2, monto);
+            stmt.setString(3, medioPago != null ? medioPago : "Efectivo");
             stmt.executeUpdate();
+            stmt.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    // Versión legacy sin medio_pago (mantiene compatibilidad)
+    public void registrarPago(int idReserva, double monto) {
+        registrarPago(idReserva, monto, "Efectivo");
     }
 }

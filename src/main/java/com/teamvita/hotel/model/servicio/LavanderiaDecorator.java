@@ -7,7 +7,8 @@ public class LavanderiaDecorator extends ServicioDecorator {
 
     @Override
     public double calcularCosto() {
-        return super.calcularCosto() + 15.0;
+        double precioDB = com.teamvita.hotel.repo.ServicioDAO.getPrecioServicio("Lavanderia", 15.0);
+        return super.calcularCosto() + precioDB;
     }
     
     @Override

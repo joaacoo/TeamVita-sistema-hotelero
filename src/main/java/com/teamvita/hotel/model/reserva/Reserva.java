@@ -44,6 +44,9 @@ public class Reserva {
         this.estado.cambiarEstado(this, new ReservaCancelada());
     }
 
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+
     public List<DetalleReserva> getDetalles() { return detalles; }
     public Huesped getHuesped() { return huesped; }
     public EstadoReserva getEstado() { return estado; }

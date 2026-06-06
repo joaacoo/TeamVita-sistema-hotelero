@@ -7,7 +7,8 @@ public class SpaDecorator extends ServicioDecorator {
 
     @Override
     public double calcularCosto() {
-        return super.calcularCosto() + 50.0;
+        double precioDB = com.teamvita.hotel.repo.ServicioDAO.getPrecioServicio("Spa", 50.0);
+        return super.calcularCosto() + precioDB;
     }
     
     @Override

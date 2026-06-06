@@ -5,16 +5,25 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 
 public class ReservaDAO {
-    public void insert(Reserva reserva) {
-        String sql = "INSERT INTO reserva (id_huesped, estado, fecha_creacion) VALUES (?, ?, CURDATE())";
+    public int insert(Reserva reserva, double totalEstimado) {
+        String sql = "INSERT INTO reserva (id_huesped, estado, fecha_creacion, total_estimado) VALUES (?, ?, CURDATE(), ?)";
         try {
             Connection con = ConexionBD.getInstancia().getConexion();
             if (con == null) throw new RuntimeException("No hay conexion a BD");
             
-            PreparedStatement ps = con.prepareStatement(sql);
+            PreparedStatement ps = con.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, reserva.getHuesped().getId() == 0 ? 1 : reserva.getHuesped().getId()); // ID dummy o real
             ps.setString(2, reserva.getEstado().getNombreEstado());
+            ps.setDouble(3, totalEstimado);
             ps.executeUpdate();
+            
+            java.sql.ResultSet rs = ps.getGeneratedKeys();
+            if(rs.next()) {
+                int id = rs.getInt(1);
+                reserva.setId(id);
+                return id;
+            }
+            return -1;
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error en BD: " + e.getMessage());
@@ -23,7 +32,7 @@ public class ReservaDAO {
 
     public java.util.List<Object[]> obtenerReservasParaTabla() {
         java.util.List<Object[]> lista = new java.util.ArrayList<>();
-        String sql = "SELECT r.id, h.nombre, r.fecha_creacion, r.estado " +
+        String sql = "SELECT r.id, h.nombre, r.fecha_creacion, r.estado, r.total_estimado " +
                      "FROM reserva r JOIN huesped h ON r.id_huesped = h.id ORDER BY r.id DESC";
         try {
             Connection con = ConexionBD.getInstancia().getConexion();
@@ -38,7 +47,7 @@ public class ReservaDAO {
                     rs.getDate("fecha_creacion"),
                     "Check-Out pendiente", // Dummy date for Check-Out as it's not in DB
                     rs.getString("estado"),
-                    "$ 0.0" // Dummy total as we don't have it
+                    String.format("$ %.2f", rs.getDouble("total_estimado"))
                 });
             }
         } catch (Exception e) {
