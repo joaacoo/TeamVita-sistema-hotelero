@@ -50,3 +50,11 @@ CREATE TABLE IF NOT EXISTS pagos (
     monto DOUBLE NOT NULL,
     fecha DATE NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS configuracion (
+    clave VARCHAR(50) PRIMARY KEY,
+    valor VARCHAR(100) NOT NULL
+);
+
+INSERT IGNORE INTO configuracion (clave, valor) VALUES ('senia_porcentaje', '30');
+

@@ -17,8 +17,43 @@ public class PanelAdministrador extends JPanel {
         
         JPanel btnHeaderPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnTarifas = new JButton("Configurar Tarifas");
+        JButton btnSenia = new JButton("Configurar Seña");
         btnHeaderPanel.add(btnTarifas);
+        btnHeaderPanel.add(btnSenia);
         headerPanel.add(btnHeaderPanel, BorderLayout.EAST);
+        
+        btnSenia.addActionListener(e -> {
+            try {
+                java.sql.Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
+                String actual = "30";
+                
+                // Fetch current from DB
+                java.sql.ResultSet rs = con.createStatement().executeQuery("SELECT valor FROM configuracion WHERE clave = 'senia_porcentaje'");
+                if (rs.next()) {
+                    actual = rs.getString(1);
+                }
+                
+                String nuevo = JOptionPane.showInputDialog(this, "Ingrese el porcentaje de seña requerido para reservas (ej: 30):", actual);
+                
+                if (nuevo != null && !nuevo.trim().isEmpty()) {
+                    // Update in DB
+                    java.sql.PreparedStatement ps = con.prepareStatement("UPDATE configuracion SET valor = ? WHERE clave = 'senia_porcentaje'");
+                    ps.setString(1, nuevo.trim());
+                    int updated = ps.executeUpdate();
+                    
+                    if (updated == 0) {
+                        // If it didn't exist for some reason, insert it
+                        java.sql.PreparedStatement psInsert = con.prepareStatement("INSERT INTO configuracion (clave, valor) VALUES ('senia_porcentaje', ?)");
+                        psInsert.setString(1, nuevo.trim());
+                        psInsert.executeUpdate();
+                    }
+                    
+                    JOptionPane.showMessageDialog(this, "Porcentaje de seña actualizado a " + nuevo.trim() + "% en la Base de Datos.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error al guardar configuración en BD: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
         
         add(headerPanel, BorderLayout.NORTH);
 
