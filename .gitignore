@@ -1,7 +1,6 @@
 .idea/
 out/
 *.class
-*.jar
 *.war
 *.ear
 *.log
