@@ -1,7 +1,7 @@
 package com.teamvita.hotel;
 
 import com.teamvita.hotel.vista.VentanaLogin;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {

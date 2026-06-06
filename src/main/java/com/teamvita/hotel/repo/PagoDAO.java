@@ -11,7 +11,7 @@ import java.sql.*;
 public class PagoDAO {
     public void registrarPago(Pago pago) {
         String sql = "INSERT INTO pagos (monto, fecha) VALUES (?, ?)";
-        try (Connection conn = ConexionBD.getInstancia().getConnection();
+        try (Connection conn = ConexionBD.getInstancia().getConexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             // TODO: Setear par�metros del statement
             stmt.executeUpdate();

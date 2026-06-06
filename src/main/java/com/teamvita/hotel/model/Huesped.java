@@ -22,6 +22,7 @@ public class Huesped {
     public String getNombre() { return nombre; }
     public String getEmail() { return email; }
     public String getTelefono() { return telefono; }
+    public void setId(int id) { this.id = id; }
     public CategoriaFidelizacion getCategoria() { return categoria; }
     public void setCategoria(CategoriaFidelizacion categoria) { this.categoria = categoria; }
 }

@@ -11,7 +11,7 @@ import java.sql.*;
 public class FacturaDAO {
     public void guardarFactura(Factura factura) {
         String sql = "INSERT INTO facturas (total, fecha) VALUES (?, ?)";
-        try (Connection conn = ConexionBD.getInstancia().getConnection();
+        try (Connection conn = ConexionBD.getInstancia().getConexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             // TODO: Setear par�metros del statement
             stmt.executeUpdate();

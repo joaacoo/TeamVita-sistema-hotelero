@@ -27,6 +27,23 @@ public class PanelCheckIn extends JPanel {
         });
         formPanel.add(btnBuscar);
 
-        add(formPanel, BorderLayout.CENTER);
+        add(formPanel, BorderLayout.NORTH);
+
+        // Cargar tabla real de la base de datos
+        String[] columnNames = {"ID Reserva", "Huésped", "Fecha Creación", "Check-Out", "Estado", "Total"};
+        com.teamvita.hotel.repo.ReservaDAO rDao = new com.teamvita.hotel.repo.ReservaDAO();
+        java.util.List<Object[]> rows = rDao.obtenerReservasParaTabla();
+        
+        Object[][] data = new Object[rows.size()][];
+        for(int i = 0; i < rows.size(); i++){
+            data[i] = rows.get(i);
+        }
+        
+        JTable table = new JTable(new javax.swing.table.DefaultTableModel(data, columnNames));
+        table.setRowHeight(25);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Todas las Reservas (Huéspedes)"));
+        
+        add(scrollPane, BorderLayout.CENTER);
     }
 }
