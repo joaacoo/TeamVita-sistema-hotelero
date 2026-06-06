@@ -46,4 +46,20 @@ public class ReservaDAO {
         }
         return lista;
     }
+
+    public void actualizarEstado(int idReserva, String nuevoEstado) {
+        String sql = "UPDATE reserva SET estado = ? WHERE id = ?";
+        try {
+            Connection con = ConexionBD.getInstancia().getConexion();
+            if (con == null) throw new RuntimeException("No hay conexion a BD");
+            
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, nuevoEstado);
+            ps.setInt(2, idReserva);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error al actualizar estado en BD: " + e.getMessage());
+        }
+    }
 }
