@@ -34,4 +34,45 @@ public class HuespedDAO {
             throw new RuntimeException("Error en BD: " + e.getMessage());
         }
     }
+    
+    public java.util.List<Object[]> obtenerTodos() {
+        java.util.List<Object[]> lista = new java.util.ArrayList<>();
+        String sql = "SELECT id, dni, nombre, email, telefono, categoria_fidelizacion FROM huesped ORDER BY nombre";
+        try {
+            Connection con = ConexionBD.getInstancia().getConexion();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                lista.add(new Object[]{
+                    rs.getInt("id"),
+                    rs.getString("dni"),
+                    rs.getString("nombre"),
+                    rs.getString("email"),
+                    rs.getString("telefono"),
+                    rs.getString("categoria_fidelizacion")
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return lista;
+    }
+
+    public void actualizarHuesped(int id, String dni, String nombre, String email, String telefono, String categoria) {
+        String sql = "UPDATE huesped SET dni=?, nombre=?, email=?, telefono=?, categoria_fidelizacion=? WHERE id=?";
+        try {
+            Connection con = ConexionBD.getInstancia().getConexion();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, dni);
+            ps.setString(2, nombre);
+            ps.setString(3, email);
+            ps.setString(4, telefono);
+            ps.setString(5, categoria);
+            ps.setInt(6, id);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error al actualizar huésped: " + e.getMessage());
+        }
+    }
 }

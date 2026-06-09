@@ -14,6 +14,8 @@ public class PanelCheckIn extends JPanel {
 
     private JButton btnCheckIn;
     private JButton btnCheckOutFacturar;
+    private JButton btnCancelarReserva;
+    private JButton btnCargarServicio;
 
     public PanelCheckIn() {
         rDao = new com.teamvita.hotel.repo.ReservaDAO();
@@ -47,16 +49,24 @@ public class PanelCheckIn extends JPanel {
 
         btnCheckIn        = new JButton("Realizar Check-In");
         btnCheckOutFacturar = new JButton("Check-Out y Facturar");
+        btnCancelarReserva = new JButton("Cancelar Reserva");
+        btnCargarServicio = new JButton("Añadir Consumo");
 
-        btnCheckIn.setPreferredSize(new Dimension(200, 38));
-        btnCheckOutFacturar.setPreferredSize(new Dimension(200, 38));
+        btnCheckIn.setPreferredSize(new Dimension(160, 38));
+        btnCheckOutFacturar.setPreferredSize(new Dimension(180, 38));
+        btnCancelarReserva.setPreferredSize(new Dimension(160, 38));
+        btnCargarServicio.setPreferredSize(new Dimension(160, 38));
 
+        btnPanel.add(btnCancelarReserva);
         btnPanel.add(btnCheckIn);
+        btnPanel.add(btnCargarServicio);
         btnPanel.add(btnCheckOutFacturar);
         add(btnPanel, BorderLayout.SOUTH);
 
         btnCheckIn.addActionListener(e -> realizarCheckIn());
         btnCheckOutFacturar.addActionListener(e -> realizarCheckOutYFacturar());
+        btnCancelarReserva.addActionListener(e -> cancelarReserva());
+        btnCargarServicio.addActionListener(e -> cargarServicioAdicional());
 
         table.getSelectionModel().addListSelectionListener(e -> actualizarEstadoBotones());
 
@@ -117,6 +127,8 @@ public class PanelCheckIn extends JPanel {
         String estado = (String) model.getValueAt(row, 6);
         btnCheckIn.setEnabled("PENDIENTE".equalsIgnoreCase(estado) || "CONFIRMADA".equalsIgnoreCase(estado));
         btnCheckOutFacturar.setEnabled("EN CURSO".equalsIgnoreCase(estado));
+        btnCancelarReserva.setEnabled("PENDIENTE".equalsIgnoreCase(estado) || "CONFIRMADA".equalsIgnoreCase(estado));
+        btnCargarServicio.setEnabled("EN CURSO".equalsIgnoreCase(estado));
     }
 
     private void realizarCheckIn() {
@@ -167,6 +179,66 @@ public class PanelCheckIn extends JPanel {
         }
     }
 
+    private void cancelarReserva() {
+        int row = table.getSelectedRow();
+        if (row == -1) return;
+        int idReserva = (int) model.getValueAt(row, 0);
+        int confirm = JOptionPane.showConfirmDialog(this, "¿Seguro que desea cancelar la reserva #" + idReserva + "?", "Cancelar Reserva", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
+                PreparedStatement ps = con.prepareStatement("UPDATE reserva SET estado = 'CANCELADA' WHERE id = ?");
+                ps.setInt(1, idReserva);
+                ps.executeUpdate();
+                ps.close();
+                JOptionPane.showMessageDialog(this, "Reserva cancelada correctamente.");
+                cargarDatos();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+            }
+        }
+    }
+
+    private void cargarServicioAdicional() {
+        int row = table.getSelectedRow();
+        if (row == -1) return;
+        int idReserva = (int) model.getValueAt(row, 0);
+        
+        try {
+            Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
+            PreparedStatement ps = con.prepareStatement("SELECT nombre, precio FROM servicio");
+            ResultSet rs = ps.executeQuery();
+            java.util.List<String> servicios = new java.util.ArrayList<>();
+            while(rs.next()){
+                servicios.add(rs.getString("nombre"));
+            }
+            rs.close();
+            ps.close();
+
+            if (servicios.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No hay servicios registrados.");
+                return;
+            }
+
+            JComboBox<String> cmbServicios = new JComboBox<>(servicios.toArray(new String[0]));
+            JSpinner spnCantidad = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
+            
+            Object[] message = {
+                "Servicio:", cmbServicios,
+                "Cantidad:", spnCantidad
+            };
+            
+            int opt = JOptionPane.showConfirmDialog(this, message, "Añadir Consumo Extra", JOptionPane.OK_CANCEL_OPTION);
+            if (opt == JOptionPane.OK_OPTION) {
+                com.teamvita.hotel.repo.ConsumoServicioDAO cDao = new com.teamvita.hotel.repo.ConsumoServicioDAO();
+                cDao.registrarConsumo(idReserva, cmbServicios.getSelectedItem().toString(), (int)spnCantidad.getValue());
+                JOptionPane.showMessageDialog(this, "Consumo registrado.");
+            }
+        } catch (Exception e) {
+             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
+
     private void realizarCheckOutYFacturar() {
         int row = table.getSelectedRow();
         if (row == -1) return;
@@ -183,13 +255,18 @@ public class PanelCheckIn extends JPanel {
         try {
             Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
 
-            // Total estimado
-            double totalEstimado = 0;
+            // Total estimado (habitación)
+            double totalHabitacion = 0;
             PreparedStatement psTotal = con.prepareStatement("SELECT total_estimado FROM reserva WHERE id = ?");
             psTotal.setInt(1, idReserva);
             ResultSet rsTotal = psTotal.executeQuery();
-            if (rsTotal.next()) totalEstimado = rsTotal.getDouble(1);
+            if (rsTotal.next()) totalHabitacion = rsTotal.getDouble(1);
             rsTotal.close(); psTotal.close();
+
+            // Total Consumos Extras
+            com.teamvita.hotel.repo.ConsumoServicioDAO cDao = new com.teamvita.hotel.repo.ConsumoServicioDAO();
+            double totalConsumos = cDao.getTotalConsumos(idReserva);
+            double totalEstimado = totalHabitacion + totalConsumos;
 
             // Senia ya abonada
             double seniaAbonada = 0;
@@ -205,6 +282,10 @@ public class PanelCheckIn extends JPanel {
             StringBuilder resumen = new StringBuilder();
             resumen.append("--- FACTURA DE ESTADIA ---\n");
             resumen.append("Huesped: ").append(huesped).append("\n");
+            resumen.append("Total Habitacion:    $").append(String.format("%.2f", totalHabitacion)).append("\n");
+            if (totalConsumos > 0) {
+                resumen.append("Servicios Extra:     $").append(String.format("%.2f", totalConsumos)).append("\n");
+            }
             resumen.append("Total de estadia:    $").append(String.format("%.2f", totalEstimado)).append("\n");
             resumen.append("Senia ya abonada:   -$").append(String.format("%.2f", seniaAbonada)).append("\n");
             resumen.append("--------------------------\n");
@@ -246,14 +327,8 @@ public class PanelCheckIn extends JPanel {
                 psPago.close();
             }
 
-            // Generar factura
-            PreparedStatement psFact = con.prepareStatement(
-                "INSERT INTO facturas (id_reserva, total, medio_pago, fecha) VALUES (?, ?, ?, CURDATE())");
-            psFact.setInt(1, idReserva);
-            psFact.setDouble(2, totalEstimado);
-            psFact.setString(3, medioPago);
-            psFact.executeUpdate();
-            psFact.close();
+            // Generar factura usando el DAO
+            new com.teamvita.hotel.repo.FacturaDAO().guardarFactura(idReserva, totalEstimado, medioPago);
 
             // Actualizar estado a FINALIZADA (con o sin fecha_checkout)
             try {

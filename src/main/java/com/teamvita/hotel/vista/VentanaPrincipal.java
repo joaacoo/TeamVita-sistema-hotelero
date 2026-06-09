@@ -16,24 +16,32 @@ public class VentanaPrincipal extends JFrame {
         
         if ("recepcion".equals(user) || "recepcionista".equals(user)) {
             PanelCheckIn panelCheckIn = new PanelCheckIn();
+            PanelHuesped panelHuesped = new PanelHuesped();
             tabbedPane.addTab("Nueva Reserva", new PanelReserva(tabbedPane));
             tabbedPane.addTab("Gestionar Reservas", panelCheckIn);
+            tabbedPane.addTab("Gestión de Huéspedes", panelHuesped);
             // Recargar reservas automáticamente al cambiar a esa pestaña
             tabbedPane.addChangeListener(e -> {
                 if (tabbedPane.getSelectedIndex() == 1) {
                     panelCheckIn.cargarDatos();
+                } else if (tabbedPane.getSelectedIndex() == 2) {
+                    panelHuesped.cargarDatos();
                 }
             });
         } else if ("admin".equals(user) || "administrador".equals(user)) {
             tabbedPane.addTab("Administración", new PanelAdministrador());
         } else {
             PanelCheckIn panelCheckIn = new PanelCheckIn();
+            PanelHuesped panelHuesped = new PanelHuesped();
             tabbedPane.addTab("Nueva Reserva", new PanelReserva(tabbedPane));
             tabbedPane.addTab("Gestionar Reservas", panelCheckIn);
+            tabbedPane.addTab("Gestión de Huéspedes", panelHuesped);
             tabbedPane.addTab("Administración", new PanelAdministrador());
             tabbedPane.addChangeListener(e -> {
                 if (tabbedPane.getSelectedIndex() == 1) {
                     panelCheckIn.cargarDatos();
+                } else if (tabbedPane.getSelectedIndex() == 2) {
+                    panelHuesped.cargarDatos();
                 }
             });
         }

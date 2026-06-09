@@ -102,3 +102,13 @@ CREATE TABLE IF NOT EXISTS promocion (
 INSERT IGNORE INTO promocion (nombre, descuento_porcentaje) VALUES ('Sin Promoción', 0.0);
 INSERT IGNORE INTO promocion (nombre, descuento_porcentaje) VALUES ('Promoción 10%', 10.0);
 INSERT IGNORE INTO promocion (nombre, descuento_porcentaje) VALUES ('Promoción 20%', 20.0);
+
+CREATE TABLE IF NOT EXISTS consumo_servicio (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    id_servicio INT NOT NULL,
+    cantidad INT NOT NULL DEFAULT 1,
+    fecha DATE NOT NULL,
+    FOREIGN KEY (id_reserva) REFERENCES reserva(id),
+    FOREIGN KEY (id_servicio) REFERENCES servicio(id)
+);

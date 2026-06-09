@@ -286,9 +286,7 @@ public class PanelReserva extends JPanel {
                 cargarHabitacionesDisponibles(cmbHabitacion);
                 cargarPromocionesDisponibles(cmbPromocion);
 
-                if (parentTabbedPane != null && parentTabbedPane.getTabCount() > 1) {
-                    parentTabbedPane.setSelectedIndex(1);
-                }
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -325,7 +323,7 @@ public class PanelReserva extends JPanel {
                 "AND h.numero NOT IN (" +
                 "  SELECT dr.numero_habitacion FROM detalle_reserva dr " +
                 "  JOIN reserva r ON r.id = dr.id_reserva " +
-                "  WHERE r.estado = 'EN CURSO'" +
+                "  WHERE r.estado IN ('PENDIENTE', 'CONFIRMADA', 'EN CURSO')" +
                 ") " +
                 "ORDER BY h.numero";
             PreparedStatement ps = con.prepareStatement(sql);
