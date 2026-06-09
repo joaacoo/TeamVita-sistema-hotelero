@@ -4,3 +4,4 @@ out/
 *.war
 *.ear
 *.log
+.vscode/

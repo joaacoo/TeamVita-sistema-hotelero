@@ -13,7 +13,7 @@ public class PanelServicios extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // ── NORTE: título + botón de seña ──────────────────────────────────
+        // NORTE: título + botón de seña
         JPanel topPanel = new JPanel(new BorderLayout());
         JLabel title = new JLabel("Gestión de Servicios Extra", SwingConstants.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 18));
@@ -24,7 +24,7 @@ public class PanelServicios extends JPanel {
         topPanel.add(btnSenia, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
-        // ── CENTRO: tabla de servicios + botón editar ──────────────────────
+        // CENTRO: tabla de servicios + botón editar
         JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
 
         String[] columnNames = {"Nombre Servicio", "Precio Adicional"};
@@ -48,7 +48,7 @@ public class PanelServicios extends JPanel {
 
         add(centerPanel, BorderLayout.CENTER);  // ← esto faltaba
 
-        // ── SUR: configuración del hotel (botón plano, sin recuadro) ──────
+        // SUR: configuración del hotel (botón plano, sin recuadro)
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         
         JLabel lblConfig = new JLabel("Configuración del Hotel:");

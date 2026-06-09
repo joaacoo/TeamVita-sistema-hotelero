@@ -18,7 +18,7 @@ public class PagoDAO {
         }
     }
 
-    // Versión legacy sin medio_pago (mantiene compatibilidad)
+    // Versión antigua sin medio_pago (mantiene compatibilidad)
     public void registrarPago(int idReserva, double monto) {
         registrarPago(idReserva, monto, "Efectivo");
     }

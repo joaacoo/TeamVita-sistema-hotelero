@@ -9,17 +9,17 @@ public class PanelAdministrador extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
-        // Header
+        // Encabezado
         JPanel headerPanel = new JPanel(new BorderLayout());
         JLabel titulo = new JLabel("Dashboard de Administración", SwingConstants.LEFT);
         titulo.setFont(new Font("Arial", Font.BOLD, 26));
         headerPanel.add(titulo, BorderLayout.WEST);
         add(headerPanel, BorderLayout.NORTH);
 
-        // Center - Stats and Tabs
+        // Centro - Estadísticas y Pestañas
         JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
         
-        // Fetch real stats (sin try-with-resources sobre la conexion)
+        // Obtener estadísticas reales (sin try-with-resources sobre la conexion)
         String ocupacion = "0%";
         String libres = "0";
         String ingresos = "$ 0";
@@ -51,7 +51,7 @@ public class PanelAdministrador extends JPanel {
             ex.printStackTrace();
         }
         
-        // Stats boxes
+        // Cuadros de estadísticas
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 10, 0));
         statsPanel.add(createStatBox("Ocupación Actual", ocupacion));
         statsPanel.add(createStatBox("Habitaciones Libres", libres));
@@ -91,7 +91,7 @@ public class PanelAdministrador extends JPanel {
         
         JLabel lblValue = new JLabel(value, SwingConstants.CENTER);
         lblValue.setFont(new Font("Arial", Font.BOLD, 24));
-        lblValue.setForeground(new Color(41, 128, 185)); // Blue color
+        lblValue.setForeground(new Color(41, 128, 185)); // Color azul
         
         box.add(lblTitle, BorderLayout.NORTH);
         box.add(lblValue, BorderLayout.CENTER);

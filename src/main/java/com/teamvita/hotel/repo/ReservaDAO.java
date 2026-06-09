@@ -12,7 +12,7 @@ public class ReservaDAO {
             if (con == null) throw new RuntimeException("No hay conexion a BD");
             
             PreparedStatement ps = con.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS);
-            ps.setInt(1, reserva.getHuesped().getId() == 0 ? 1 : reserva.getHuesped().getId()); // ID dummy o real
+            ps.setInt(1, reserva.getHuesped().getId() == 0 ? 1 : reserva.getHuesped().getId()); // ID ficticio o real
             ps.setString(2, reserva.getEstado().getNombreEstado());
             ps.setDouble(3, totalEstimado);
             ps.executeUpdate();
@@ -45,7 +45,7 @@ public class ReservaDAO {
                     rs.getInt("id"),
                     rs.getString("nombre"),
                     rs.getDate("fecha_creacion"),
-                    "Check-Out pendiente", // Dummy date for Check-Out as it's not in DB
+                    "Check-Out pendiente", // Fecha ficticia para el Check-Out ya que no está en la BD
                     rs.getString("estado"),
                     String.format("$ %.2f", rs.getDouble("total_estimado"))
                 });

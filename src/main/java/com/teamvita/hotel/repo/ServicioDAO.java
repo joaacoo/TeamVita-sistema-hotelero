@@ -48,7 +48,7 @@ public class ServicioDAO {
         }
     }
 
-    // Helper para los Decorators
+    // Función auxiliar para los Decoradores
     public static double getPrecioServicio(String nombreServicio, double defaultPrecio) {
         String sql = "SELECT precio FROM servicio WHERE nombre = ?";
         try {
