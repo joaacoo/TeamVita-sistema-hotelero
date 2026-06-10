@@ -1,13 +1,48 @@
-# Registro de Tareas
+# Registro de Tareas y Participación Individual (Fases 1, 2 y 3)
 
-## Fase 1: Análisis del problema y diseño inicial
-* Joaquín De Luca: Creación del repositorio, UML.
-* Lautaro Vita: Diagrama de secuencia 2.
-* Claudino Diaz: Diagrama de secuencia 1.
+El presente documento detalla la participación real de cada integrante del equipo, basada en el historial de commits del repositorio GitHub, demostrando los aportes de cada uno a lo largo del desarrollo del TPO.
 
-## Fase 2: Diseño orientado a objetos y patrones
-* **Joaquín De Luca:** Configuración inicial del entorno Java. Programación de la capa de dominio (`model`), definición de entidades puras, relaciones y justificación teórica de los principios SOLID implementados (SRP con la división de `DetalleReserva`, OCP, LSP).
+## Joaquín De Luca (@joaacoo)
+**Rol Principal:** Diseño arquitectónico del Modelo, UI/UX y Estructura Base.
+* **Fase 1:** 
+  * Estructuración inicial del proyecto y primer commit.
+  * Elaboración de los primeros Casos de Uso (CU), Diagrama de Clases (DC) y diagramas UML.
+* **Fase 2:**
+  * Implementación core de la lógica del negocio (Capa `model`).
+  * Reorganización estructural de la carpeta modelo y entidades.
+  * Desarrollo inicial de las interfaces gráficas y paneles de vista (login admin, etc.).
+  * Refactor de UI y conexión a base de datos.
+* **Fase 3:**
+  * Configuración del entorno (Librería mysql-connector-j, gitignore).
+  * Mejoras finales en UI y corrección de errores visuales.
+  * Modificaciones en persistencia de HuespedDAO (identificación con DNI) y ReservaDAO.
+  * Ajustes finales en lógica de Factura e implementación de Servicios Adicionales (Decorator dinámico).
 
-* **Lautaro Vita:** Responsable de la capa de negocio. Implementación del controlador principal aplicando el patrón Facade (`SistemaHotelFacade`) y estructuración de los patrones creacionales y de comportamiento (Factory Method y Strategy).
+## Lautaro Vita (@Lautivita)
+**Rol Principal:** Controlador, Fachada y Patrones de Negocio.
+* **Fase 1:**
+  * Elaboración del Diagrama de Secuencia 2 enfocado en el Check-in.
+  * Estructuración inicial de los paquetes `vista` y `negocio`.
+* **Fase 2:**
+  * Implementación del patrón Facade (`SistemaHotelFacade`) y Factory (`HabitacionFactory`).
+  * Implementación de estrategias de Tarifas (`TarifaStrategy`).
+  * Correcciones en el diagrama de secuencia de Check-in.
+* **Fase 3:**
+  * Sincronización entre capa de presentación y repositorio.
+  * Cambios avanzados en `repo` y `vista` para mejorar la gestión dinámica de los estados polimórficos de la reserva.
 
-* **Claudino Diaz:** A cargo del diseño y programación de la capa de acceso a datos (`repo`), definiendo las interfaces y simulando la persistencia de los DAOs. Responsable de implementar el patrón Singleton para la conexión a la base de datos y documentar los patrones GRASP.
+## Claudino Diaz (@ClauDrive / @ClaudinoDiaz)
+**Rol Principal:** Persistencia de Datos (DAO), Conexión JDBC y Diseño SQL.
+* **Fase 1:**
+  * Diseño del Diagrama de Secuencia 1 para la gestión de reservas.
+* **Fase 2:**
+  * Implementación de la capa de Acceso a Datos (DAOs) y patrón Singleton para `ConexionBD`.
+  * Integración de la conexión JDBC a MySQL y desarrollo de las sentencias SQL en todos los DAOs.
+  * Actualización técnica de los diagramas de secuencia.
+* **Fase 3:**
+  * Actualización del script SQL (`hotel_db.sql`) integrando nuevas tablas de facturas, pagos y configuraciones.
+  * Programación del Panel Admin dinámico y la gestión del cobro de señas desde la BD.
+
+---
+
+> **Nota para la defensa:** Como se observa en este registro (y en el historial de la rama `main` en GitHub), el desarrollo fue altamente colaborativo. Joaquín sentó las bases del modelo de dominio y la UI, Lautaro interconectó ambas puntas implementando la Fachada y los patrones de comportamiento, y Claudino desarrolló toda la infraestructura de persistencia relacional que hace que el sistema sea completamente funcional.
