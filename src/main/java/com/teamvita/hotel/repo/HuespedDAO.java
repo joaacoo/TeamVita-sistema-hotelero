@@ -7,10 +7,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 public class HuespedDAO {
-    public void insert(Huesped huesped) {
-        insertWithDni(huesped, "00000000", "Clásica"); // Legacy
-    }
-    
+
     public void insertWithDni(Huesped huesped, String dni, String categoriaFidelizacion) {
         String sql = "INSERT INTO huesped (dni, nombre, email, telefono, categoria_fidelizacion) VALUES (?, ?, ?, ?, ?) " +
                      "ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), email=VALUES(email), telefono=VALUES(telefono), categoria_fidelizacion=VALUES(categoria_fidelizacion)";
