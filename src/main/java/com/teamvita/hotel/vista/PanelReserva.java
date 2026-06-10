@@ -16,6 +16,7 @@ import java.sql.Statement;
 public class PanelReserva extends JPanel {
     private SistemaHotelFacade facade;
     private JTabbedPane parentTabbedPane;
+    private JComboBox<HabitacionItem> cmbHabitacion;
 
     class HabitacionItem {
         int numero;
@@ -68,9 +69,13 @@ public class PanelReserva extends JPanel {
         gbc.gridx = 0; gbc.gridy = 0;
         formPanel.add(new JLabel("DNI Huésped (Máx 8):"), gbc);
         gbc.gridx = 1;
-        JTextField txtDni = new JTextField(15);
+        JPanel pnlDni = new JPanel(new BorderLayout());
+        JTextField txtDni = new JTextField(10);
         aplicarFiltroDni(txtDni);
-        formPanel.add(txtDni, gbc);
+        pnlDni.add(txtDni, BorderLayout.CENTER);
+        JButton btnBuscarDni = new JButton("Buscar");
+        pnlDni.add(btnBuscarDni, BorderLayout.EAST);
+        formPanel.add(pnlDni, gbc);
 
         // Fila 1: Nombre
         gbc.gridx = 0; gbc.gridy = 1;
@@ -100,6 +105,37 @@ public class PanelReserva extends JPanel {
         JComboBox<String> cmbFidelizacion = new JComboBox<>(new String[]{"Clásica", "Gold", "Platinum"});
         cmbFidelizacion.setPreferredSize(new Dimension(165, 25));
         formPanel.add(cmbFidelizacion, gbc);
+
+        btnBuscarDni.addActionListener(e -> {
+            String dni = txtDni.getText().trim();
+            if(dni.isEmpty()) return;
+            com.teamvita.hotel.model.Huesped h = facade.buscarHuespedPorDni(dni);
+            if(h != null) {
+                txtNombre.setText(h.getNombre());
+                txtEmail.setText(h.getEmail());
+                txtTelefono.setText(h.getTelefono());
+                String cat = h.getCategoria().getClass().getSimpleName();
+                if (cat.contains("Gold")) cmbFidelizacion.setSelectedItem("Gold");
+                else if (cat.contains("Platinum")) cmbFidelizacion.setSelectedItem("Platinum");
+                else cmbFidelizacion.setSelectedItem("Clásica");
+                
+                txtNombre.setEditable(false);
+                txtEmail.setEditable(false);
+                txtTelefono.setEditable(false);
+                cmbFidelizacion.setEnabled(false);
+                JOptionPane.showMessageDialog(this, "Huésped encontrado. Los datos se han autocompletado y bloqueado.\nPara modificar su categoría, hágalo desde Gestión de Huéspedes.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                txtNombre.setText("");
+                txtEmail.setText("");
+                txtTelefono.setText("");
+                cmbFidelizacion.setSelectedIndex(0);
+                txtNombre.setEditable(true);
+                txtEmail.setEditable(true);
+                txtTelefono.setEditable(true);
+                cmbFidelizacion.setEnabled(true);
+                JOptionPane.showMessageDialog(this, "Huésped no registrado. Ingrese los datos para un nuevo huésped.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        });
 
         // Fila 5: Check-In
         gbc.gridx = 0; gbc.gridy = 5;
@@ -139,8 +175,9 @@ public class PanelReserva extends JPanel {
         gbc.gridx = 0; gbc.gridy = 7;
         formPanel.add(new JLabel("Habitación Disponible:"), gbc);
         gbc.gridx = 1;
-        JComboBox<HabitacionItem> cmbHabitacion = new JComboBox<>();
+        cmbHabitacion = new JComboBox<>();
         cmbHabitacion.setPreferredSize(new Dimension(200, 25));
+        cargarHabitacionesDisponibles(cmbHabitacion);
         cargarHabitacionesDisponibles(cmbHabitacion);
         formPanel.add(cmbHabitacion, gbc);
 
@@ -273,7 +310,7 @@ public class PanelReserva extends JPanel {
                 // Guardar en BD
                 facade.registrarReservaCompleta(
                     txtDni.getText(), txtNombre.getText(), txtEmail.getText(), txtTelefono.getText(), catName,
-                    dIn, dOut, habItem.tipo, habItem.numero, montoTotal, seniaCalculada, medio
+                    dIn, dOut, habItem.tipo, habItem.numero, montoTotal, seniaCalculada, medio, cantPersonas
                 );
 
                 JOptionPane.showMessageDialog(this, "Reserva guardada correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
@@ -283,6 +320,12 @@ public class PanelReserva extends JPanel {
                 txtCheckIn.setText(""); txtCheckOut.setText("");
                 cmbFidelizacion.setSelectedIndex(0);
                 spnPersonas.setValue(1);
+                
+                txtNombre.setEditable(true);
+                txtEmail.setEditable(true);
+                txtTelefono.setEditable(true);
+                cmbFidelizacion.setEnabled(true);
+                
                 cargarHabitacionesDisponibles(cmbHabitacion);
                 cargarPromocionesDisponibles(cmbPromocion);
 
@@ -366,5 +409,11 @@ public class PanelReserva extends JPanel {
                 if (newStr.matches("\\d{0,8}")) super.replace(fb, offset, length, text, attrs);
             }
         });
+    }
+
+    public void recargarDatos() {
+        if (cmbHabitacion != null) {
+            cargarHabitacionesDisponibles(cmbHabitacion);
+        }
     }
 }

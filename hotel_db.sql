@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS reserva (
     fecha_checkin DATE NULL,
     fecha_checkout DATE NULL,
     total_estimado DOUBLE NOT NULL DEFAULT 0.0,
+    cantidad_personas INT NOT NULL DEFAULT 1,
     FOREIGN KEY (id_huesped) REFERENCES huesped(id)
 );
 
@@ -86,12 +87,17 @@ INSERT IGNORE INTO configuracion (clave, valor) VALUES ('hotel_direccion', 'Av. 
 CREATE TABLE IF NOT EXISTS servicio (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
-    precio DOUBLE NOT NULL
+    precio DOUBLE NOT NULL,
+    categoria VARCHAR(50) DEFAULT 'General'
 );
 
-INSERT IGNORE INTO servicio (nombre, precio) VALUES ('Lavanderia', 15.0);
-INSERT IGNORE INTO servicio (nombre, precio) VALUES ('Restaurante', 30.0);
-INSERT IGNORE INTO servicio (nombre, precio) VALUES ('Spa', 50.0);
+INSERT IGNORE INTO servicio (nombre, precio, categoria) VALUES ('Lavandería', 15.0, 'General');
+INSERT IGNORE INTO servicio (nombre, precio, categoria) VALUES ('Menú Ejecutivo', 30.0, 'Restaurante');
+INSERT IGNORE INTO servicio (nombre, precio, categoria) VALUES ('Cena Romántica', 80.0, 'Restaurante');
+INSERT IGNORE INTO servicio (nombre, precio, categoria) VALUES ('Menú Infantil', 15.0, 'Restaurante');
+INSERT IGNORE INTO servicio (nombre, precio, categoria) VALUES ('Masaje Descontracturante', 50.0, 'Spa');
+INSERT IGNORE INTO servicio (nombre, precio, categoria) VALUES ('Masaje Relajante', 40.0, 'Spa');
+INSERT IGNORE INTO servicio (nombre, precio, categoria) VALUES ('Sauna', 25.0, 'Spa');
 
 CREATE TABLE IF NOT EXISTS promocion (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -111,4 +117,12 @@ CREATE TABLE IF NOT EXISTS consumo_servicio (
     fecha DATE NOT NULL,
     FOREIGN KEY (id_reserva) REFERENCES reserva(id),
     FOREIGN KEY (id_servicio) REFERENCES servicio(id)
+);
+
+CREATE TABLE IF NOT EXISTS acompanante (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    dni VARCHAR(10) NOT NULL,
+    FOREIGN KEY (id_reserva) REFERENCES reserva(id) ON DELETE CASCADE
 );

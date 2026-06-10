@@ -11,7 +11,7 @@ public class ServicioDAO {
     
     public List<Object[]> obtenerServiciosParaTabla() {
         List<Object[]> servicios = new ArrayList<>();
-        String sql = "SELECT nombre, precio FROM servicio ORDER BY nombre";
+        String sql = "SELECT nombre, precio, categoria FROM servicio ORDER BY categoria, nombre";
         try {
             Connection con = ConexionBD.getInstancia().getConexion();
             PreparedStatement ps = con.prepareStatement(sql);
@@ -19,7 +19,8 @@ public class ServicioDAO {
             while (rs.next()) {
                 servicios.add(new Object[]{
                     rs.getString("nombre"),
-                    String.format("$ %.2f", rs.getDouble("precio"))
+                    String.format("$ %.2f", rs.getDouble("precio")),
+                    rs.getString("categoria")
                 });
             }
             rs.close();
@@ -43,6 +44,38 @@ public class ServicioDAO {
             return rows > 0;
         } catch (SQLException e) {
             System.err.println("[ServicioDAO] Error al actualizar precio: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean insertarServicio(String nombre, double precio, String categoria) {
+        String sql = "INSERT INTO servicio (nombre, precio, categoria) VALUES (?, ?, ?)";
+        try {
+            Connection con = ConexionBD.getInstancia().getConexion();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, nombre);
+            ps.setDouble(2, precio);
+            ps.setString(3, categoria);
+            int rows = ps.executeUpdate();
+            ps.close();
+            return rows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean eliminarServicio(String nombre) {
+        String sql = "DELETE FROM servicio WHERE nombre = ?";
+        try {
+            Connection con = ConexionBD.getInstancia().getConexion();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, nombre);
+            int rows = ps.executeUpdate();
+            ps.close();
+            return rows > 0;
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }

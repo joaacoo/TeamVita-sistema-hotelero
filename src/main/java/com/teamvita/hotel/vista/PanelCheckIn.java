@@ -16,7 +16,6 @@ public class PanelCheckIn extends JPanel {
     private JButton btnCheckOutFacturar;
     private JButton btnCancelarReserva;
     private JButton btnCargarServicio;
-
     public PanelCheckIn() {
         rDao = new com.teamvita.hotel.repo.ReservaDAO();
         setLayout(new BorderLayout());
@@ -51,7 +50,6 @@ public class PanelCheckIn extends JPanel {
         btnCheckOutFacturar = new JButton("Check-Out y Facturar");
         btnCancelarReserva = new JButton("Cancelar Reserva");
         btnCargarServicio = new JButton("Añadir Consumo");
-
         btnCheckIn.setPreferredSize(new Dimension(160, 38));
         btnCheckOutFacturar.setPreferredSize(new Dimension(180, 38));
         btnCancelarReserva.setPreferredSize(new Dimension(160, 38));
@@ -78,13 +76,15 @@ public class PanelCheckIn extends JPanel {
         model.setRowCount(0);
 
         // Query simplificada: no usa fecha_checkin/fecha_checkout de reserva (puede no existir)
-        // Usa las fechas de detalle_reserva si existen
+        // Usa las fechas de detalle_reserva si existen.
+        // Suma el total estimado de la reserva base + total de consumos extra
         String sql =
             "SELECT r.id, h.nombre, r.fecha_creacion, " +
             "  COALESCE(CAST(dr.numero_habitacion AS CHAR), 'N/A') AS habitacion, " +
             "  COALESCE(CAST(dr.fecha_inicio AS CHAR), '-') AS fecha_inicio, " +
             "  COALESCE(CAST(dr.fecha_fin AS CHAR), '-') AS fecha_fin, " +
-            "  r.estado, r.total_estimado, " +
+            "  r.estado, " +
+            "  r.total_estimado + COALESCE((SELECT SUM(c.cantidad * s.precio) FROM consumo_servicio c JOIN servicio s ON c.id_servicio = s.id WHERE c.id_reserva = r.id), 0) AS total_final, " +
             "  COALESCE((SELECT SUM(p.monto) FROM pagos p WHERE p.id_reserva = r.id), 0) AS senia " +
             "FROM reserva r " +
             "JOIN huesped h ON r.id_huesped = h.id " +
@@ -104,7 +104,7 @@ public class PanelCheckIn extends JPanel {
                     rs.getString("fecha_inicio"),
                     rs.getString("fecha_fin"),
                     rs.getString("estado"),
-                    String.format("$ %.2f", rs.getDouble("total_estimado")),
+                    String.format("$ %.2f", rs.getDouble("total_final")),
                     String.format("$ %.2f", rs.getDouble("senia"))
                 });
             }
@@ -122,6 +122,8 @@ public class PanelCheckIn extends JPanel {
         if (row == -1) {
             btnCheckIn.setEnabled(false);
             btnCheckOutFacturar.setEnabled(false);
+            btnCancelarReserva.setEnabled(false);
+            btnCargarServicio.setEnabled(false);
             return;
         }
         String estado = (String) model.getValueAt(row, 6);
@@ -173,6 +175,7 @@ public class PanelCheckIn extends JPanel {
                 "Check-In realizado correctamente.\nHuesped: " + huesped,
                 "Check-In Exitoso", JOptionPane.INFORMATION_MESSAGE);
             cargarDatos();
+            solicitarAcompanantes(idReserva);
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -206,36 +209,141 @@ public class PanelCheckIn extends JPanel {
         
         try {
             Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
-            PreparedStatement ps = con.prepareStatement("SELECT nombre, precio FROM servicio");
+            PreparedStatement ps = con.prepareStatement("SELECT nombre, precio, categoria FROM servicio ORDER BY categoria, nombre");
             ResultSet rs = ps.executeQuery();
-            java.util.List<String> servicios = new java.util.ArrayList<>();
+            
+            java.util.Map<String, java.util.List<String>> mapCategorias = new java.util.HashMap<>();
+            java.util.Map<String, Double> mapPrecios = new java.util.HashMap<>();
             while(rs.next()){
-                servicios.add(rs.getString("nombre"));
+                String cat = rs.getString("categoria");
+                String nom = rs.getString("nombre");
+                double precio = rs.getDouble("precio");
+                mapCategorias.putIfAbsent(cat, new java.util.ArrayList<>());
+                mapCategorias.get(cat).add(nom);
+                mapPrecios.put(nom, precio);
             }
             rs.close();
             ps.close();
 
-            if (servicios.isEmpty()) {
+            if (mapCategorias.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "No hay servicios registrados.");
                 return;
             }
 
-            JComboBox<String> cmbServicios = new JComboBox<>(servicios.toArray(new String[0]));
-            JSpinner spnCantidad = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
+            JComboBox<String> cmbCategoria = new JComboBox<>(mapCategorias.keySet().toArray(new String[0]));
+            JComboBox<String> cmbServicio = new JComboBox<>();
+            JLabel lblPrecio = new JLabel("Precio: $0.00");
+            lblPrecio.setFont(new Font("Arial", Font.PLAIN, 12));
+            lblPrecio.setForeground(Color.BLACK);
             
-            Object[] message = {
-                "Servicio:", cmbServicios,
-                "Cantidad:", spnCantidad
+            Runnable updatePrecio = () -> {
+                String selServ = (String) cmbServicio.getSelectedItem();
+                if (selServ != null && mapPrecios.containsKey(selServ)) {
+                    lblPrecio.setText(String.format("Valor: $%.2f", mapPrecios.get(selServ)));
+                } else {
+                    lblPrecio.setText("Valor: -");
+                }
             };
             
-            int opt = JOptionPane.showConfirmDialog(this, message, "Añadir Consumo Extra", JOptionPane.OK_CANCEL_OPTION);
+            Runnable updateServicios = () -> {
+                cmbServicio.removeAllItems();
+                String selCat = (String) cmbCategoria.getSelectedItem();
+                if (selCat != null) {
+                    for (String s : mapCategorias.get(selCat)) {
+                        cmbServicio.addItem(s);
+                    }
+                }
+                updatePrecio.run();
+            };
+            
+            cmbCategoria.addActionListener(e -> updateServicios.run());
+            cmbServicio.addActionListener(e -> updatePrecio.run());
+            updateServicios.run(); // initial load
+            
+            JSpinner spnCantidad = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
+            
+            JPanel panelForm = new JPanel(new GridLayout(4, 2, 8, 8));
+            panelForm.add(new JLabel("Categoría:"));
+            panelForm.add(cmbCategoria);
+            panelForm.add(new JLabel("Servicio:"));
+            panelForm.add(cmbServicio);
+            panelForm.add(new JLabel("Precio Unitario:"));
+            panelForm.add(lblPrecio);
+            panelForm.add(new JLabel("Cantidad:"));
+            panelForm.add(spnCantidad);
+            
+            int opt = JOptionPane.showConfirmDialog(this, panelForm, "Añadir Consumo Extra", JOptionPane.OK_CANCEL_OPTION);
             if (opt == JOptionPane.OK_OPTION) {
-                com.teamvita.hotel.repo.ConsumoServicioDAO cDao = new com.teamvita.hotel.repo.ConsumoServicioDAO();
-                cDao.registrarConsumo(idReserva, cmbServicios.getSelectedItem().toString(), (int)spnCantidad.getValue());
-                JOptionPane.showMessageDialog(this, "Consumo registrado.");
+                String seleccionado = (String) cmbServicio.getSelectedItem();
+                if (seleccionado != null) {
+                    com.teamvita.hotel.repo.ConsumoServicioDAO cDao = new com.teamvita.hotel.repo.ConsumoServicioDAO();
+                    cDao.registrarConsumo(idReserva, seleccionado, (int)spnCantidad.getValue());
+                    JOptionPane.showMessageDialog(this, "Consumo registrado exitosamente.");
+                    cargarDatos();
+                }
             }
         } catch (Exception e) {
              JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
+
+    private void solicitarAcompanantes(int idReserva) {
+        int cantidadPersonas = 1;
+        try {
+            Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
+            PreparedStatement ps = con.prepareStatement("SELECT cantidad_personas FROM reserva WHERE id = ?");
+            ps.setInt(1, idReserva);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) cantidadPersonas = rs.getInt("cantidad_personas");
+            rs.close(); ps.close();
+        } catch (Exception e) { e.printStackTrace(); }
+
+        int acompanantesEsperados = cantidadPersonas - 1;
+        if (acompanantesEsperados <= 0) return; // Solo el titular o error
+
+        int resp = JOptionPane.showConfirmDialog(this,
+            "Esta reserva es para " + cantidadPersonas + " personas.\n¿Desea registrar los " + acompanantesEsperados + " acompañantes ahora?",
+            "Registrar Acompañantes", JOptionPane.YES_NO_OPTION);
+        
+        if (resp != JOptionPane.YES_OPTION) return;
+
+        JPanel panelForm = new JPanel(new GridLayout(acompanantesEsperados * 2, 2, 5, 5));
+        JTextField[] nombres = new JTextField[acompanantesEsperados];
+        JTextField[] dnis = new JTextField[acompanantesEsperados];
+
+        for (int i = 0; i < acompanantesEsperados; i++) {
+            nombres[i] = new JTextField(15);
+            dnis[i] = new JTextField(10);
+            panelForm.add(new JLabel("Acompañante " + (i+1) + " - Nombre:"));
+            panelForm.add(nombres[i]);
+            panelForm.add(new JLabel("Acompañante " + (i+1) + " - DNI:"));
+            panelForm.add(dnis[i]);
+        }
+
+        // Usamos JScrollPane por si son muchos acompañantes (ej. 5)
+        JScrollPane scroll = new JScrollPane(panelForm);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.setPreferredSize(new Dimension(350, Math.min(acompanantesEsperados * 60, 300)));
+
+        int option = JOptionPane.showConfirmDialog(this, scroll, "Datos de Acompañantes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (option == JOptionPane.OK_OPTION) {
+            com.teamvita.hotel.repo.AcompananteDAO aDao = new com.teamvita.hotel.repo.AcompananteDAO();
+            int agregados = 0;
+            for (int i = 0; i < acompanantesEsperados; i++) {
+                String nom = nombres[i].getText().trim();
+                String dni = dnis[i].getText().trim();
+                if (!nom.isEmpty() && !dni.isEmpty()) {
+                    com.teamvita.hotel.model.reserva.Acompanante a = new com.teamvita.hotel.model.reserva.Acompanante(nom, dni);
+                    a.setIdReserva(idReserva);
+                    aDao.insertar(a);
+                    agregados++;
+                }
+            }
+            if (agregados > 0) {
+                JOptionPane.showMessageDialog(this, "Se registraron " + agregados + " acompañante(s) exitosamente.");
+            } else {
+                JOptionPane.showMessageDialog(this, "No se registró ningún acompañante (campos incompletos).", "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
         }
     }
 

@@ -5,20 +5,22 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 
 public class ReservaDAO {
-    public int insert(Reserva reserva, double totalEstimado) {
-        String sql = "INSERT INTO reserva (id_huesped, estado, fecha_creacion, total_estimado) VALUES (?, ?, CURDATE(), ?)";
+    public int insert(Reserva reserva, double totalEstimado, int cantidadPersonas) {
+        String sql = "INSERT INTO reserva (id_huesped, estado, fecha_creacion, total_estimado, cantidad_personas) VALUES (?, ?, CURDATE(), ?, ?)";
         try {
             Connection con = ConexionBD.getInstancia().getConexion();
-            if (con == null) throw new RuntimeException("No hay conexion a BD");
-            
+            if (con == null)
+                throw new RuntimeException("No hay conexion a BD");
+
             PreparedStatement ps = con.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, reserva.getHuesped().getId() == 0 ? 1 : reserva.getHuesped().getId()); // ID ficticio o real
             ps.setString(2, reserva.getEstado().getNombreEstado());
             ps.setDouble(3, totalEstimado);
+            ps.setInt(4, cantidadPersonas);
             ps.executeUpdate();
-            
+
             java.sql.ResultSet rs = ps.getGeneratedKeys();
-            if(rs.next()) {
+            if (rs.next()) {
                 int id = rs.getInt(1);
                 reserva.setId(id);
                 return id;
@@ -33,21 +35,22 @@ public class ReservaDAO {
     public java.util.List<Object[]> obtenerReservasParaTabla() {
         java.util.List<Object[]> lista = new java.util.ArrayList<>();
         String sql = "SELECT r.id, h.nombre, r.fecha_creacion, r.estado, r.total_estimado " +
-                     "FROM reserva r JOIN huesped h ON r.id_huesped = h.id ORDER BY r.id DESC";
+                "FROM reserva r JOIN huesped h ON r.id_huesped = h.id ORDER BY r.id DESC";
         try {
             Connection con = ConexionBD.getInstancia().getConexion();
-            if (con == null) throw new RuntimeException("No hay conexion a BD");
-            
+            if (con == null)
+                throw new RuntimeException("No hay conexion a BD");
+
             java.sql.PreparedStatement ps = con.prepareStatement(sql);
             java.sql.ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 lista.add(new Object[] {
-                    rs.getInt("id"),
-                    rs.getString("nombre"),
-                    rs.getDate("fecha_creacion"),
-                    "Check-Out pendiente", // Fecha ficticia para el Check-Out ya que no está en la BD
-                    rs.getString("estado"),
-                    String.format("$ %.2f", rs.getDouble("total_estimado"))
+                        rs.getInt("id"),
+                        rs.getString("nombre"),
+                        rs.getDate("fecha_creacion"),
+                        "Check-Out pendiente",
+                        rs.getString("estado"),
+                        String.format("$ %.2f", rs.getDouble("total_estimado"))
                 });
             }
         } catch (Exception e) {
@@ -60,8 +63,9 @@ public class ReservaDAO {
         String sql = "UPDATE reserva SET estado = ? WHERE id = ?";
         try {
             Connection con = ConexionBD.getInstancia().getConexion();
-            if (con == null) throw new RuntimeException("No hay conexion a BD");
-            
+            if (con == null)
+                throw new RuntimeException("No hay conexion a BD");
+
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, nuevoEstado);
             ps.setInt(2, idReserva);

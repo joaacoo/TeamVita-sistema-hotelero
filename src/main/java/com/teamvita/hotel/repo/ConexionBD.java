@@ -28,10 +28,56 @@ public class ConexionBD {
             String password = ""; // Por defecto en XAMPP está vacío; establezca la contraseña si la cambió
             this.conexion = DriverManager.getConnection(url, usuario, password);
             System.out.println("Conectado a la base de datos MySQL 'hotel_db'");
+            aplicarMigracionesFase3();
         } catch (SQLException e) {
             System.err.println(
                     "Error al conectar a MySQL. Verifique que MySQL se esté ejecutando y las credenciales sean correctas.");
             e.printStackTrace();
+        }
+    }
+
+    private void aplicarMigracionesFase3() {
+        try {
+            // Migración para 'servicio'
+            try {
+                java.sql.Statement st = conexion.createStatement();
+                st.execute("ALTER TABLE servicio ADD COLUMN categoria VARCHAR(50) DEFAULT 'General'");
+                st.close();
+            } catch (SQLException ignore) { /* Ya existe la columna */ }
+            
+            // Migración para 'reserva' - cantidad de personas
+            try {
+                java.sql.Statement st = conexion.createStatement();
+                st.execute("ALTER TABLE reserva ADD COLUMN cantidad_personas INT DEFAULT 1");
+                st.close();
+            } catch (SQLException ignore) { /* Ya existe la columna */ }
+
+            // Insertar datos que el usuario no tiene porque la tabla ya existía
+            String inserts = "INSERT IGNORE INTO servicio (nombre, precio, categoria) VALUES " +
+                "('Lavandería', 15.0, 'General'), " +
+                "('Menú Ejecutivo', 30.0, 'Restaurante'), " +
+                "('Cena Romántica', 80.0, 'Restaurante'), " +
+                "('Menú Infantil', 15.0, 'Restaurante'), " +
+                "('Masaje Descontracturante', 50.0, 'Spa'), " +
+                "('Masaje Relajante', 40.0, 'Spa'), " +
+                "('Sauna', 25.0, 'Spa')";
+            java.sql.Statement stInsert = conexion.createStatement();
+            stInsert.execute(inserts);
+            stInsert.close();
+
+            // Asegurarnos de que acompanante existe
+            String createAcompanante = "CREATE TABLE IF NOT EXISTS acompanante (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                "id_reserva INT NOT NULL, " +
+                "nombre VARCHAR(100) NOT NULL, " +
+                "dni VARCHAR(10) NOT NULL, " +
+                "FOREIGN KEY (id_reserva) REFERENCES reserva(id) ON DELETE CASCADE)";
+            java.sql.Statement stAcom = conexion.createStatement();
+            stAcom.execute(createAcompanante);
+            stAcom.close();
+            System.out.println("[ConexionBD] Migraciones de Fase 3 aplicadas correctamente.");
+        } catch (Exception e) {
+            System.err.println("Error al aplicar migraciones automáticas: " + e.getMessage());
         }
     }
 

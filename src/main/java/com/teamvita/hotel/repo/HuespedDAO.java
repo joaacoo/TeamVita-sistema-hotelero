@@ -72,4 +72,31 @@ public class HuespedDAO {
             throw new RuntimeException("Error al actualizar huésped: " + e.getMessage());
         }
     }
+
+    public Huesped buscarPorDNI(String dni) {
+        String sql = "SELECT id, nombre, email, telefono, categoria_fidelizacion FROM huesped WHERE dni = ?";
+        try {
+            Connection con = ConexionBD.getInstancia().getConexion();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, dni);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Huesped h = new Huesped(
+                    rs.getInt("id"),
+                    rs.getString("nombre"),
+                    rs.getString("email"),
+                    rs.getString("telefono")
+                );
+                String cat = rs.getString("categoria_fidelizacion");
+                if ("Gold".equals(cat)) h.setCategoria(new com.teamvita.hotel.model.fidelizacion.CategoriaGold());
+                else if ("Platinum".equals(cat)) h.setCategoria(new com.teamvita.hotel.model.fidelizacion.CategoriaPlatinum());
+                else h.setCategoria(new com.teamvita.hotel.model.fidelizacion.CategoriaClasica());
+                
+                return h;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

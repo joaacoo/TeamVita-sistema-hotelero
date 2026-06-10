@@ -18,15 +18,21 @@ public class SistemaHotelFacade {
     private HuespedDAO huespedDAO;
     private ReservaDAO reservaDAO;
     private PagoDAO pagoDAO;
+    private com.teamvita.hotel.repo.AcompananteDAO acompananteDAO;
 
     public SistemaHotelFacade() {
         this.habitacionFactory = new HabitacionFactory();
         this.huespedDAO = new HuespedDAO();
         this.reservaDAO = new ReservaDAO();
         this.pagoDAO = new PagoDAO();
+        this.acompananteDAO = new com.teamvita.hotel.repo.AcompananteDAO();
     }
 
-    public void registrarReservaCompleta(String dni, String nombre, String email, String tel, String categoriaFidelizacion, LocalDate checkIn, LocalDate checkOut, String tipoHab, int numeroHabitacion, double montoTotal, double seniaAbonada, String medioPago) {
+    public Huesped buscarHuespedPorDni(String dni) {
+        return huespedDAO.buscarPorDNI(dni);
+    }
+
+    public void registrarReservaCompleta(String dni, String nombre, String email, String tel, String categoriaFidelizacion, LocalDate checkIn, LocalDate checkOut, String tipoHab, int numeroHabitacion, double montoTotal, double seniaAbonada, String medioPago, int cantidadPersonas) {
         // 1. Crear y guardar Huesped
         Huesped huesped = new Huesped(0, nombre, email, tel);
         huespedDAO.insertWithDni(huesped, dni, categoriaFidelizacion);
@@ -38,7 +44,7 @@ public class SistemaHotelFacade {
         reserva.agregarDetalle(detalle);
         
         // 3. Guardar reserva y obtener ID
-        int idReserva = reservaDAO.insert(reserva, montoTotal);
+        int idReserva = reservaDAO.insert(reserva, montoTotal, cantidadPersonas);
         
         // 4. Guardar detalle de reserva (habitación + fechas) en BD
         if (idReserva != -1) {
@@ -78,6 +84,13 @@ public class SistemaHotelFacade {
             }
             Estadia estadia = new Estadia(reserva, LocalDate.now());
             reserva.setEstadia(estadia);
+        }
+    }
+
+    public void guardarAcompanantes(int idReserva, List<com.teamvita.hotel.model.reserva.Acompanante> acompanantes) {
+        for (com.teamvita.hotel.model.reserva.Acompanante a : acompanantes) {
+            a.setIdReserva(idReserva);
+            acompananteDAO.insertar(a);
         }
     }
 }

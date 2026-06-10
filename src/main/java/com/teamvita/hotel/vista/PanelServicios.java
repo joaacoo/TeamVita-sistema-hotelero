@@ -27,7 +27,7 @@ public class PanelServicios extends JPanel {
         // CENTRO: tabla de servicios + botón editar
         JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
 
-        String[] columnNames = {"Nombre Servicio", "Precio Adicional"};
+        String[] columnNames = {"Nombre Servicio", "Precio Adicional", "Categoría"};
         model = new javax.swing.table.DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -41,9 +41,18 @@ public class PanelServicios extends JPanel {
         centerPanel.add(scrollPane, BorderLayout.CENTER);  // ← aquí estaba el bug
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton btnEdit = new JButton("Editar Precio de Servicio");
+        JButton btnNuevo = new JButton("Nuevo Servicio");
+        JButton btnEdit = new JButton("Editar Precio");
+        JButton btnEliminar = new JButton("Eliminar Servicio");
+
+        btnPanel.add(btnNuevo);
         btnPanel.add(btnEdit);
+        btnPanel.add(btnEliminar);
+
+        btnNuevo.addActionListener(e -> nuevoServicio());
         btnEdit.addActionListener(e -> editarPrecioServicio());
+        btnEliminar.addActionListener(e -> eliminarServicio());
+
         centerPanel.add(btnPanel, BorderLayout.SOUTH);
 
         add(centerPanel, BorderLayout.CENTER);  // ← esto faltaba
@@ -95,6 +104,59 @@ public class PanelServicios extends JPanel {
                 }
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Ingrese un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void nuevoServicio() {
+        JTextField txtNombre = new JTextField();
+        JTextField txtPrecio = new JTextField();
+        JComboBox<String> cmbCat = new JComboBox<>(new String[]{"General", "Spa", "Restaurante", "Lavandería"});
+        
+        Object[] msg = {
+            "Nombre:", txtNombre,
+            "Precio:", txtPrecio,
+            "Categoría:", cmbCat
+        };
+        
+        int opt = JOptionPane.showConfirmDialog(this, msg, "Nuevo Servicio", JOptionPane.OK_CANCEL_OPTION);
+        if (opt == JOptionPane.OK_OPTION) {
+            try {
+                String nombre = txtNombre.getText().trim();
+                double precio = Double.parseDouble(txtPrecio.getText().replace(",", "."));
+                String categoria = cmbCat.getSelectedItem().toString();
+                
+                if (nombre.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                if (servicioDAO.insertarServicio(nombre, precio, categoria)) {
+                    cargarDatos();
+                    JOptionPane.showMessageDialog(this, "Servicio creado.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al crear servicio (¿nombre duplicado?).", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Precio inválido.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void eliminarServicio() {
+        int selected = table.getSelectedRow();
+        if (selected == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione un servicio de la tabla.", "Atención", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String nombre = (String) model.getValueAt(selected, 0);
+        int opt = JOptionPane.showConfirmDialog(this, "¿Seguro que desea eliminar el servicio '" + nombre + "'?", "Eliminar", JOptionPane.YES_NO_OPTION);
+        if (opt == JOptionPane.YES_OPTION) {
+            if (servicioDAO.eliminarServicio(nombre)) {
+                cargarDatos();
+                JOptionPane.showMessageDialog(this, "Servicio eliminado.");
+            } else {
+                JOptionPane.showMessageDialog(this, "No se pudo eliminar. Puede que esté asociado a consumos.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
