@@ -42,7 +42,3 @@ El presente documento detalla la participación real de cada integrante del equi
 * **Fase 3:**
   * Actualización del script SQL (`hotel_db.sql`) integrando nuevas tablas de facturas, pagos y configuraciones.
   * Programación del Panel Admin dinámico y la gestión del cobro de señas desde la BD.
-
----
-
-> **Nota para la defensa:** Como se observa en este registro (y en el historial de la rama `main` en GitHub), el desarrollo fue altamente colaborativo. Joaquín sentó las bases del modelo de dominio y la UI, Lautaro interconectó ambas puntas implementando la Fachada y los patrones de comportamiento, y Claudino desarrolló toda la infraestructura de persistencia relacional que hace que el sistema sea completamente funcional.
