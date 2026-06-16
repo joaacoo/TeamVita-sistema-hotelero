@@ -19,24 +19,30 @@ Plataforma integral construida en Java bajo una arquitectura de 4 capas (Vista, 
    - **Administrador**: User: `admin` / Pass: `admin123`
 
 ## Patrones aplicados (Fase 3)
-* **Factory Method:** `HabitacionFactory` para instanciar de forma centralizada las variantes de habitaciones.
-* **Singleton:** `ConexionBD` para garantizar una única conexión a la base de datos MySQL compartida por todos los DAOs.
-* **Facade:** `SistemaHotelFacade` como controlador unificado desde la interfaz gráfica hacia la lógica de dominio.
-* **Decorator (Dinámico):** `ServicioDinamicoDecorator` para agregar consumos extra consultando los precios directamente desde la BD en tiempo de ejecución.
-* **Strategy:** Implementado en `TarifaStrategy` (cálculo de precios comerciales) y `CategoriaFidelizacion` (beneficios para el huésped).
-* **State:** `EstadoReserva` para administrar polimórficamente las transiciones lógicas (Pendiente, Confirmada, Cancelada).
+### Patrones Estructurales
+* **Facade:** `SistemaHotelFacade` proporciona un punto de entrada unificado y simplificado desde el paquete vista hacia la lógica de negocio y model.
+* **Decorator:** `ServicioDecorator` permite añadir responsabilidades o servicios adicionales (`SpaDecorator`, `RestauranteDecorator`, `LavanderiaDecorator`) a la estadía de forma dinámica.
+
+### Patrones de Comportamiento
+* **Strategy:** `TarifaStrategy` encapsula los algoritmos de cálculo de precios. `CategoriaFidelizacion` encapsula el cálculo de descuentos según el nivel de membresía.
+* **State:** `EstadoReserva` administra las transiciones lógicas de la reserva.
 
 ## Principios SOLID aplicados
-* **Single Responsibility Principle (SRP):** Alta separación de responsabilidades: los objetos del dominio no acceden a la BD, los DAOs no manejan reglas de negocio y las vistas Swing solo dibujan la interfaz.
-* **Open/Closed Principle (OCP):** El uso del `ServicioDinamicoDecorator` permite añadir infinitos servicios adicionales desde la base de datos sin necesidad de crear clases Java nuevas, cerrando el código a modificaciones.
-* **Liskov Substitution Principle (LSP):** La jerarquía de habitaciones permite sustituir la clase base en los procesos iterativos asegurando el comportamiento correcto mediante polimorfismo puro.
-* **Dependency Inversion Principle (DIP):** El controlador principal no depende de las estrategias concretas de descuento o estado, sino de sus abstracciones correspondientes.
+* **Single Responsibility Principle (SRP):** Las clases de `model` representan el dominio, mientras que en `repo` se encargan de la base de datos. Ejemplo clave: división de `Reserva` y `DetalleReserva`.
+* **Open/Closed Principle (OCP):** El patrón Decorator permite incorporar nuevos servicios adicionales sin modificar el código en las clases de facturación o estadía.
+* **Liskov Substitution Principle (LSP):** La jerarquía de habitaciones permite suministrar una instancia de `Suite`, `HabitacionSimple` o `HabitacionDoble` donde se requiera `Habitacion`.
+* **Dependency Inversion Principle (DIP):** El modelo de dominio depende de abstracciones (interfaces como `TarifaStrategy` o `EstadoReserva`) y no de implementaciones concretas.
+* **Interface Segregation Principle (ISP):** Se diseñaron interfaces pequeñas y de propósito único, como `TarifaStrategy` que expone únicamente `calcularTarifa()`.
 
 ## Patrones GRASP aplicados
-* **Controlador (Controller):** La clase `SistemaHotelFacade` recibe y coordina los eventos de la UI hacia el sistema.
-* **Experto en Información (Information Expert):** La clase `Estadia` posee la responsabilidad de calcular el costo total porque concentra los días alojados y consumos.
-* **Variaciones Protegidas:** Se aisló al sistema central de cambios en lógicas de cálculo mediante interfaces (Strategy y State).
-* **Alta Cohesión y Bajo Acoplamiento:** Asegurado mediante la estricta división en paquetes funcionales (`vista`, `negocio`, `model`, `repo`).
+* **Controlador (Controller):** `SistemaHotelFacade` actúa como controlador principal.
+* **Experto en Información (Information Expert):** `Estadia` posee la responsabilidad de calcular el costo total.
+* **Alta Cohesión y Bajo Acoplamiento:** Garantizado mediante la estricta separación en capas (vista, negocio, model, repo).
+* **Polimorfismo:** Uso de interfaces (`TarifaStrategy`, `EstadoReserva`, `CategoriaFidelizacion`) para delegar el comportamiento que varía.
+* **Fabricación Pura (Pure Fabrication):** Clases como `SistemaHotelFacade`, `ConexionBD` y DAOs introducidas artificialmente para organizar código y aislar responsabilidades.
+* **Creador (Creator):** `SistemaHotelFacade` actúa como creador de `Reserva` y `Estadia`.
+* **Indirección (Indirection):** `SistemaHotelFacade` actúa como intermediario entre Presentación (Vista) y Dominio/Persistencia.
+* **Variaciones Protegidas:** Lógicas como cálculo de tarifas protegidas detrás de la interfaz `TarifaStrategy`.
 
 ## Distribución de tareas
 * **Joaquín De Luca**: Lógica de entidades de dominio (`model`), implementación de cálculos polimórficos, refactorización de colecciones para acompañantes.
