@@ -2,13 +2,15 @@ package com.teamvita.hotel.vista;
 
 import javax.swing.*;
 import java.awt.*;
-import java.sql.*;
 
 public class PanelGestionHabitaciones extends JPanel {
     private JTable table;
     private javax.swing.table.DefaultTableModel model;
+    private com.teamvita.hotel.negocio.SistemaHotelFacade facade;
 
     public PanelGestionHabitaciones() {
+        this.facade = new com.teamvita.hotel.negocio.SistemaHotelFacade();
+
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -16,7 +18,7 @@ public class PanelGestionHabitaciones extends JPanel {
         title.setFont(new Font("Arial", Font.BOLD, 18));
         add(title, BorderLayout.NORTH);
 
-        String[] columnNames = {"Número", "Tipo", "Precio Base", "Capacidad", "Disponible"};
+        String[] columnNames = {"Número", "Tipo", "Precio Base", "Capacidad"};
         model = new javax.swing.table.DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -40,39 +42,10 @@ public class PanelGestionHabitaciones extends JPanel {
 
     private void cargarDatos() {
         model.setRowCount(0);
-        try {
-            Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
-            PreparedStatement ps;
-            try {
-                ps = con.prepareStatement(
-                    "SELECT numero, tipo, precio_base, capacidad, disponible FROM habitacion ORDER BY numero");
-                ResultSet rs = ps.executeQuery();
-                while (rs.next()) {
-                    model.addRow(new Object[]{
-                        rs.getInt("numero"),
-                        rs.getString("tipo"),
-                        String.format("$ %.2f", rs.getDouble("precio_base")),
-                        rs.getInt("capacidad"),
-                        rs.getBoolean("disponible") ? "Sí" : "No"
-                    });
-                }
-                rs.close(); ps.close();
-            } catch (SQLException ex) {
-                // Sin columna capacidad (BD vieja)
-                ps = con.prepareStatement(
-                    "SELECT numero, tipo, precio_base, disponible FROM habitacion ORDER BY numero");
-                ResultSet rs = ps.executeQuery();
-                while (rs.next()) {
-                    model.addRow(new Object[]{
-                        rs.getInt("numero"), rs.getString("tipo"),
-                        String.format("$ %.2f", rs.getDouble("precio_base")),
-                        "-",
-                        rs.getBoolean("disponible") ? "Sí" : "No"
-                    });
-                }
-                rs.close(); ps.close();
-            }
-        } catch (Exception ex) { ex.printStackTrace(); }
+        java.util.List<Object[]> datos = facade.obtenerTodasHabitaciones();
+        for (Object[] fila : datos) {
+            model.addRow(fila);
+        }
     }
 
     /** Devuelve la capacidad máxima según el tipo. */
@@ -108,18 +81,8 @@ public class PanelGestionHabitaciones extends JPanel {
                 double precio = "Doble".equals(tipo) ? 80.0 : "Suite".equals(tipo) ? 150.0 : 50.0;
                 int cap = capacidadPorTipo(tipo);
 
-                Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
-                try {
-                    PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO habitacion (numero, tipo, precio_base, capacidad, disponible) VALUES (?, ?, ?, ?, TRUE)");
-                    ps.setInt(1, num); ps.setString(2, tipo); ps.setDouble(3, precio); ps.setInt(4, cap);
-                    ps.executeUpdate(); ps.close();
-                } catch (SQLException ex2) {
-                    PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO habitacion (numero, tipo, precio_base, disponible) VALUES (?, ?, ?, TRUE)");
-                    ps.setInt(1, num); ps.setString(2, tipo); ps.setDouble(3, precio);
-                    ps.executeUpdate(); ps.close();
-                }
+                facade.agregarHabitacion(num, tipo, precio, cap);
+
                 JOptionPane.showMessageDialog(this, "Habitación " + num + " (" + tipo + ", cap. " + cap + " pers.) agregada.");
                 cargarDatos();
             } catch (NumberFormatException ex) {
@@ -141,34 +104,20 @@ public class PanelGestionHabitaciones extends JPanel {
 
         // Verificar si tiene reserva EN CURSO
         try {
-            Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
-            PreparedStatement psCheck = con.prepareStatement(
-                "SELECT COUNT(*) FROM detalle_reserva dr " +
-                "JOIN reserva r ON r.id = dr.id_reserva " +
-                "WHERE dr.numero_habitacion = ? AND r.estado = 'EN CURSO'");
-            psCheck.setInt(1, numero);
-            ResultSet rsCheck = psCheck.executeQuery();
-            if (rsCheck.next() && rsCheck.getInt(1) > 0) {
-                rsCheck.close(); psCheck.close();
+            if (facade.isHabitacionOcupada(numero)) {
                 JOptionPane.showMessageDialog(this,
                     "La habitación " + numero + " tiene un huésped actualmente.\nNo se puede editar mientras esté ocupada.",
                     "Habitación ocupada", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            rsCheck.close(); psCheck.close();
 
             // Cargar datos actuales
-            PreparedStatement psHab = con.prepareStatement(
-                "SELECT tipo, precio_base, capacidad FROM habitacion WHERE numero = ?");
-            psHab.setInt(1, numero);
-            ResultSet rsHab = psHab.executeQuery();
-            if (!rsHab.next()) { rsHab.close(); psHab.close(); return; }
+            Object[] datosActuales = facade.getHabitacionData(numero);
+            if (datosActuales == null) return;
 
-            String tipoActual   = rsHab.getString("tipo");
-            double precioActual = rsHab.getDouble("precio_base");
-            int capActual;
-            try { capActual = rsHab.getInt("capacidad"); } catch (Exception e) { capActual = 1; }
-            rsHab.close(); psHab.close();
+            String tipoActual   = (String) datosActuales[0];
+            double precioActual = (Double) datosActuales[1];
+            int capActual = (Integer) datosActuales[2];
 
             // Formulario de edición
             JComboBox<String> cmbTipo  = new JComboBox<>(new String[]{"Simple", "Doble", "Suite"});
@@ -192,18 +141,8 @@ public class PanelGestionHabitaciones extends JPanel {
                 double nuevoPrecio = "Doble".equals(nuevoTipo) ? 80.0 : "Suite".equals(nuevoTipo) ? 150.0 : 50.0;
                 int nuevaCap = capacidadPorTipo(nuevoTipo);
 
-                try {
-                    PreparedStatement psUpd = con.prepareStatement(
-                        "UPDATE habitacion SET tipo = ?, precio_base = ?, capacidad = ? WHERE numero = ?");
-                    psUpd.setString(1, nuevoTipo); psUpd.setDouble(2, nuevoPrecio);
-                    psUpd.setInt(3, nuevaCap);     psUpd.setInt(4, numero);
-                    psUpd.executeUpdate(); psUpd.close();
-                } catch (SQLException ex2) {
-                    PreparedStatement psUpd = con.prepareStatement(
-                        "UPDATE habitacion SET tipo = ?, precio_base = ? WHERE numero = ?");
-                    psUpd.setString(1, nuevoTipo); psUpd.setDouble(2, nuevoPrecio); psUpd.setInt(3, numero);
-                    psUpd.executeUpdate(); psUpd.close();
-                }
+                facade.editarHabitacion(numero, nuevoTipo, nuevoPrecio, nuevaCap);
+
                 JOptionPane.showMessageDialog(this, "Habitación " + numero + " actualizada.");
                 cargarDatos();
             }

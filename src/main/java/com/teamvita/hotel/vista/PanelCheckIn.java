@@ -258,7 +258,7 @@ public class PanelCheckIn extends JPanel {
             
             cmbCategoria.addActionListener(e -> updateServicios.run());
             cmbServicio.addActionListener(e -> updatePrecio.run());
-            updateServicios.run(); // initial load
+            updateServicios.run(); // carga inicial
             
             JSpinner spnCantidad = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
             

@@ -75,4 +75,24 @@ public class ReservaDAO {
             throw new RuntimeException("Error al actualizar estado en BD: " + e.getMessage());
         }
     }
+
+    public void insertDetalleReserva(int idReserva, int numeroHabitacion, java.time.LocalDate checkIn, java.time.LocalDate checkOut) {
+        String sql = "INSERT INTO detalle_reserva (id_reserva, numero_habitacion, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)";
+        try {
+            Connection con = ConexionBD.getInstancia().getConexion();
+            if (con == null)
+                throw new RuntimeException("No hay conexion a BD");
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, idReserva);
+            ps.setInt(2, numeroHabitacion);
+            ps.setDate(3, java.sql.Date.valueOf(checkIn));
+            ps.setDate(4, java.sql.Date.valueOf(checkOut));
+            ps.executeUpdate();
+            ps.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error guardando detalle_reserva: " + e.getMessage());
+        }
+    }
 }

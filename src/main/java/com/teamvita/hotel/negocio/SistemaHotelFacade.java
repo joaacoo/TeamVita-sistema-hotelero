@@ -19,10 +19,12 @@ public class SistemaHotelFacade {
     private ReservaDAO reservaDAO;
     private PagoDAO pagoDAO;
     private com.teamvita.hotel.repo.AcompananteDAO acompananteDAO;
+    private com.teamvita.hotel.repo.HabitacionDAO habitacionDAO;
 
     public SistemaHotelFacade() {
         this.habitacionFactory = new HabitacionFactory();
         this.huespedDAO = new HuespedDAO();
+        this.habitacionDAO = new com.teamvita.hotel.repo.HabitacionDAO();
         this.reservaDAO = new ReservaDAO();
         this.pagoDAO = new PagoDAO();
         this.acompananteDAO = new com.teamvita.hotel.repo.AcompananteDAO();
@@ -48,19 +50,7 @@ public class SistemaHotelFacade {
         
         // 4. Guardar detalle de reserva (habitación + fechas) en BD
         if (idReserva != -1) {
-            try {
-                java.sql.Connection con = com.teamvita.hotel.repo.ConexionBD.getInstancia().getConexion();
-                java.sql.PreparedStatement ps = con.prepareStatement(
-                    "INSERT INTO detalle_reserva (id_reserva, numero_habitacion, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)");
-                ps.setInt(1, idReserva);
-                ps.setInt(2, numeroHabitacion);
-                ps.setDate(3, java.sql.Date.valueOf(checkIn));
-                ps.setDate(4, java.sql.Date.valueOf(checkOut));
-                ps.executeUpdate();
-                ps.close();
-            } catch (Exception e) {
-                System.err.println("[Facade] Error guardando detalle_reserva: " + e.getMessage());
-            }
+            reservaDAO.insertDetalleReserva(idReserva, numeroHabitacion, checkIn, checkOut);
         }
         
         // 5. Registrar Pago de seña con medio de pago
@@ -92,5 +82,26 @@ public class SistemaHotelFacade {
             a.setIdReserva(idReserva);
             acompananteDAO.insertar(a);
         }
+    }
+
+    // --- Métodos de Gestión de Habitaciones (Puente con DAO) ---
+    public java.util.List<Object[]> obtenerTodasHabitaciones() {
+        return habitacionDAO.getAllForTable();
+    }
+
+    public void agregarHabitacion(int numero, String tipo, double precioBase, int capacidad) {
+        habitacionDAO.insert(numero, tipo, precioBase, capacidad);
+    }
+
+    public void editarHabitacion(int numero, String tipo, double precioBase, int capacidad) {
+        habitacionDAO.updateCompleto(numero, tipo, precioBase, capacidad);
+    }
+
+    public boolean isHabitacionOcupada(int numero) {
+        return habitacionDAO.isHabitacionOcupada(numero);
+    }
+
+    public Object[] getHabitacionData(int numero) {
+        return habitacionDAO.getHabitacionData(numero);
     }
 }

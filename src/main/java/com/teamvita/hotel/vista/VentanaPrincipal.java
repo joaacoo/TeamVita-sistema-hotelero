@@ -29,21 +29,28 @@ public class VentanaPrincipal extends JFrame {
                 else if (index == 2) panelHuesped.cargarDatos();
             });
         } else if ("admin".equals(user) || "administrador".equals(user)) {
-            tabbedPane.addTab("Administración", new PanelAdministrador());
+            PanelAdministrador panelAdmin = new PanelAdministrador();
+            tabbedPane.addTab("Administración", panelAdmin);
+            tabbedPane.addChangeListener(e -> {
+                int index = tabbedPane.getSelectedIndex();
+                if (index == 0) panelAdmin.recargarDatos();
+            });
         } else {
             PanelReserva panelReserva = new PanelReserva(tabbedPane);
             PanelCheckIn panelCheckIn = new PanelCheckIn();
             PanelHuesped panelHuesped = new PanelHuesped();
+            PanelAdministrador panelAdmin = new PanelAdministrador();
             tabbedPane.addTab("Nueva Reserva", panelReserva);
             tabbedPane.addTab("Gestionar Reservas", panelCheckIn);
             tabbedPane.addTab("Gestión de Huéspedes", panelHuesped);
-            tabbedPane.addTab("Administración", new PanelAdministrador());
+            tabbedPane.addTab("Administración", panelAdmin);
             
             tabbedPane.addChangeListener(e -> {
                 int index = tabbedPane.getSelectedIndex();
                 if (index == 0) panelReserva.recargarDatos();
                 else if (index == 1) panelCheckIn.cargarDatos();
                 else if (index == 2) panelHuesped.cargarDatos();
+                else if (index == 3) panelAdmin.recargarDatos();
             });
         }
 
