@@ -171,6 +171,17 @@ public class PanelCheckIn extends JPanel {
                 ps.executeUpdate();
                 ps.close();
             }
+            
+            // Marcar habitación como ocupada (disponible = 0)
+            try {
+                PreparedStatement psHab = con.prepareStatement(
+                    "UPDATE habitacion SET disponible = 0 WHERE numero IN (SELECT numero_habitacion FROM detalle_reserva WHERE id_reserva = ?)");
+                psHab.setInt(1, idReserva);
+                psHab.executeUpdate();
+                psHab.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             JOptionPane.showMessageDialog(this,
                 "Check-In realizado correctamente.\nHuesped: " + huesped,
                 "Check-In Exitoso", JOptionPane.INFORMATION_MESSAGE);
@@ -194,6 +205,16 @@ public class PanelCheckIn extends JPanel {
                 ps.setInt(1, idReserva);
                 ps.executeUpdate();
                 ps.close();
+                
+                // Liberar habitación (disponible = 1) por si acaso estaba bloqueada
+                try {
+                    PreparedStatement psHab = con.prepareStatement(
+                        "UPDATE habitacion SET disponible = 1 WHERE numero IN (SELECT numero_habitacion FROM detalle_reserva WHERE id_reserva = ?)");
+                    psHab.setInt(1, idReserva);
+                    psHab.executeUpdate();
+                    psHab.close();
+                } catch (Exception ex) {}
+
                 JOptionPane.showMessageDialog(this, "Reserva cancelada correctamente.");
                 cargarDatos();
             } catch (Exception e) {
@@ -325,24 +346,56 @@ public class PanelCheckIn extends JPanel {
         scroll.setBorder(BorderFactory.createEmptyBorder());
         scroll.setPreferredSize(new Dimension(350, Math.min(acompanantesEsperados * 60, 300)));
 
-        int option = JOptionPane.showConfirmDialog(this, scroll, "Datos de Acompañantes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (option == JOptionPane.OK_OPTION) {
-            com.teamvita.hotel.repo.AcompananteDAO aDao = new com.teamvita.hotel.repo.AcompananteDAO();
-            int agregados = 0;
-            for (int i = 0; i < acompanantesEsperados; i++) {
-                String nom = nombres[i].getText().trim();
-                String dni = dnis[i].getText().trim();
-                if (!nom.isEmpty() && !dni.isEmpty()) {
-                    com.teamvita.hotel.model.reserva.Acompanante a = new com.teamvita.hotel.model.reserva.Acompanante(nom, dni);
-                    a.setIdReserva(idReserva);
-                    aDao.insertar(a);
-                    agregados++;
+        boolean done = false;
+        while (!done) {
+            int option = JOptionPane.showConfirmDialog(this, scroll, "Datos de Acompañantes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (option == JOptionPane.OK_OPTION) {
+                com.teamvita.hotel.repo.AcompananteDAO aDao = new com.teamvita.hotel.repo.AcompananteDAO();
+                int agregados = 0;
+                int completos = 0;
+                
+                for (int i = 0; i < acompanantesEsperados; i++) {
+                    String nom = nombres[i].getText().trim();
+                    String dni = dnis[i].getText().trim();
+                    if (!nom.isEmpty() && !dni.isEmpty()) {
+                        completos++;
+                    }
                 }
-            }
-            if (agregados > 0) {
-                JOptionPane.showMessageDialog(this, "Se registraron " + agregados + " acompañante(s) exitosamente.");
+                
+                if (completos == acompanantesEsperados) {
+                    for (int i = 0; i < acompanantesEsperados; i++) {
+                        String nom = nombres[i].getText().trim();
+                        String dni = dnis[i].getText().trim();
+                        com.teamvita.hotel.model.reserva.Acompanante a = new com.teamvita.hotel.model.reserva.Acompanante(nom, dni);
+                        a.setIdReserva(idReserva);
+                        aDao.insertar(a);
+                        agregados++;
+                    }
+                    JOptionPane.showMessageDialog(this, "Se registraron " + agregados + " acompañante(s) exitosamente.");
+                    done = true;
+                } else {
+                    int retry = JOptionPane.showConfirmDialog(this, "Faltan datos de algunos acompañantes. ¿Desea reintentar completarlos?\nSi elige No, se guardarán solo los completados y continuará el Check-In.", "Campos incompletos", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    if (retry == JOptionPane.NO_OPTION) {
+                        for (int i = 0; i < acompanantesEsperados; i++) {
+                            String nom = nombres[i].getText().trim();
+                            String dni = dnis[i].getText().trim();
+                            if (!nom.isEmpty() && !dni.isEmpty()) {
+                                com.teamvita.hotel.model.reserva.Acompanante a = new com.teamvita.hotel.model.reserva.Acompanante(nom, dni);
+                                a.setIdReserva(idReserva);
+                                aDao.insertar(a);
+                                agregados++;
+                            }
+                        }
+                        if (agregados > 0) {
+                            JOptionPane.showMessageDialog(this, "Se registraron " + agregados + " acompañante(s) exitosamente.");
+                        } else {
+                            JOptionPane.showMessageDialog(this, "No se registró ningún acompañante (campos incompletos).", "Aviso", JOptionPane.WARNING_MESSAGE);
+                        }
+                        done = true;
+                    }
+                }
             } else {
-                JOptionPane.showMessageDialog(this, "No se registró ningún acompañante (campos incompletos).", "Aviso", JOptionPane.WARNING_MESSAGE);
+                done = true;
             }
         }
     }
@@ -451,6 +504,17 @@ public class PanelCheckIn extends JPanel {
                 psEstado.setInt(1, idReserva);
                 psEstado.executeUpdate();
                 psEstado.close();
+            }
+
+            // Liberar habitación (disponible = 1)
+            try {
+                PreparedStatement psHab = con.prepareStatement(
+                    "UPDATE habitacion SET disponible = 1 WHERE numero IN (SELECT numero_habitacion FROM detalle_reserva WHERE id_reserva = ?)");
+                psHab.setInt(1, idReserva);
+                psHab.executeUpdate();
+                psHab.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
             String ticket =
